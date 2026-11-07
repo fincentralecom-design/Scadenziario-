@@ -6,11 +6,12 @@ import { bolloContratto, currentPeriodEnd, generateContractDeadlines, registroAn
 import { effectiveDate, f24CodeFor, formatEuro, sortByDate } from "@/lib/deadlines";
 import type { Contract } from "@/lib/types";
 import { api, type AppData } from "./api";
+import type { Notify } from "./feedback";
 
 interface Props {
   data: AppData;
   reload: () => Promise<void>;
-  notify: (m: string) => void;
+  notify: Notify;
 }
 
 type Form = {

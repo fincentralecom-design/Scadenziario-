@@ -5,11 +5,12 @@ import { formatLong, formatShort } from "@/lib/dates";
 import { effectiveDate, shiftReason, sortByDate } from "@/lib/deadlines";
 import { CATEGORY_LABELS, RECURRENCE_LABELS, type Calculator, type Category, type Deadline, type Recurrence } from "@/lib/types";
 import { api, type AppData } from "./api";
+import type { Notify } from "./feedback";
 
 interface Props {
   data: AppData;
   reload: () => Promise<void>;
-  notify: (m: string) => void;
+  notify: Notify;
   editing: Deadline | null;
   setEditing: (d: Deadline | null) => void;
 }

@@ -51,8 +51,8 @@ export default function CompleteDialog({ d, suggestedAmount, onClose, onConfirm 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="complete-title">
-      <div className="max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
+    <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="complete-title">
+      <div className="sheet-in max-h-[92dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
         <div className="flex items-start justify-between gap-3">
           <h2 id="complete-title" className="text-2xl font-extrabold text-slate-900">Conferma pagamento / adempimento</h2>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-slate-100" aria-label="Chiudi">
@@ -91,7 +91,7 @@ export default function CompleteDialog({ d, suggestedAmount, onClose, onConfirm 
             : "Scadenza non ricorrente: verrà archiviata come completata."}
         </p>
 
-        <div className="sticky -bottom-6 -mx-6 mt-5 flex flex-col gap-3 border-t border-slate-200 bg-white px-6 pb-6 pt-4">
+        <div className="sticky -bottom-6 -mx-6 mt-5 flex flex-col gap-3 border-t border-slate-200 bg-white px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
           <button className="btn-green py-4 text-xl" onClick={submit} disabled={busy}>
             <CircleCheckBig className="h-7 w-7" aria-hidden /> {busy ? "Salvataggio…" : "CONFERMA: FATTO"}
           </button>

@@ -4,6 +4,7 @@ import { CircleCheck, CircleX, Mail, MessageCircle, PlayCircle, Save, Send, Smar
 import { todayRome } from "@/lib/dates";
 import type { Settings } from "@/lib/types";
 import { api } from "./api";
+import type { Notify } from "./feedback";
 
 interface SettingsResponse {
   settings: Settings;
@@ -43,7 +44,7 @@ function WaText({ text }: { text: string }) {
   );
 }
 
-export default function SettingsPanel({ notify }: { notify: (m: string) => void }) {
+export default function SettingsPanel({ notify }: { notify: Notify }) {
   const [info, setInfo] = useState<SettingsResponse | null>(null);
   const [s, setS] = useState<Settings | null>(null);
   const [date, setDate] = useState(todayRome());

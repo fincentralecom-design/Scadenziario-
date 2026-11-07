@@ -191,9 +191,9 @@ export default function Guide({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-center bg-black/50 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="guide-title">
-      <div className="flex h-full w-full max-w-3xl flex-col bg-slate-50 sm:rounded-3xl">
-        <div className="flex items-center justify-between gap-3 bg-blue-800 px-5 py-4 text-white sm:rounded-t-3xl">
+    <div className="fade-in fixed inset-0 z-[60] flex justify-center bg-black/50 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+      <div className="sheet-in flex h-full w-full max-w-3xl flex-col bg-slate-50 sm:rounded-3xl">
+        <div className="safe-top flex items-center justify-between gap-3 bg-blue-800 px-5 py-4 text-white sm:rounded-t-3xl">
           <h2 id="guide-title" className="flex items-center gap-2 text-2xl font-extrabold">
             <BookOpen className="h-7 w-7" aria-hidden /> Guida
           </h2>
@@ -201,7 +201,7 @@ export default function Guide({ onClose }: { onClose: () => void }) {
             <X className="h-6 w-6" aria-hidden /> Chiudi
           </button>
         </div>
-        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+        <div className="safe-bottom flex-1 space-y-3 overflow-y-auto overscroll-contain p-4">
           <p className="text-lg text-slate-700">Tocca un argomento per aprirlo.</p>
           {SECTIONS.map((s, i) => (
             <details key={s.title} open={i === 0} className="group rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">

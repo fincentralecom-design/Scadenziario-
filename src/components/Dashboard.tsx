@@ -7,11 +7,12 @@ import { CATEGORY_LABELS, type Category, type Deadline } from "@/lib/types";
 import { api, receiptUrl, type AppData } from "./api";
 import CompleteDialog from "./CompleteDialog";
 import DeadlineCard from "./DeadlineCard";
+import { celebrate, type Notify } from "./feedback";
 
 interface Props {
   data: AppData;
   reload: () => Promise<void>;
-  notify: (m: string) => void;
+  notify: Notify;
   onEdit: (d: Deadline) => void;
 }
 
@@ -69,9 +70,18 @@ export default function Dashboard({ data, reload, notify, onEdit }: Props) {
   const complete = async (input: Parameters<React.ComponentProps<typeof CompleteDialog>["onConfirm"]>[0]) => {
     if (!completing) return;
     try {
-      await api(`/api/deadlines/${completing.d.id}/complete`, "POST", input);
-      notify("✅ Fatto! Scadenza registrata nello storico.");
+      const id = completing.d.id;
+      await api(`/api/deadlines/${id}/complete`, "POST", input);
       setCompleting(null);
+      celebrate();
+      notify("✅ Fatto! Registrata nello storico.", {
+        label: "Annulla",
+        run: async () => {
+          await api(`/api/deadlines/${id}/undo`, "POST");
+          notify("Annullato: la scadenza è di nuovo da fare.");
+          await reload();
+        },
+      });
       await reload();
     } catch (e) {
       notify(`Errore: ${e instanceof Error ? e.message : e}`);
@@ -99,8 +109,11 @@ export default function Dashboard({ data, reload, notify, onEdit }: Props) {
         {tiles.map((t) => (
           <button
             key={t.id}
-            onClick={() => setFilter(filter === t.id ? "all" : t.id)}
-            className={`rounded-2xl p-4 text-left shadow ${t.cls} ${filter === t.id ? "ring-4" : ""}`}
+            onClick={() => {
+              setFilter(filter === t.id ? "all" : t.id);
+              setTimeout(() => document.getElementById("elenco")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+            }}
+            className={`rounded-2xl p-4 text-left shadow transition active:scale-95 ${t.cls} ${filter === t.id ? "ring-4 ring-offset-2" : ""}`}
             aria-pressed={filter === t.id}
           >
             <span className="block text-4xl font-extrabold">{t.count}</span>
@@ -115,7 +128,7 @@ export default function Dashboard({ data, reload, notify, onEdit }: Props) {
         )}
       </p>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+      <div id="elenco" className="mt-4 flex scroll-mt-4 flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-slate-400" aria-hidden />
           <input className="field !pl-12" placeholder="Cerca scadenza o codice tributo…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Cerca" />
