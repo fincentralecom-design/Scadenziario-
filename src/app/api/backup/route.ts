@@ -1,38 +1,19 @@
-import { actorFrom, listAudit, logAudit, replaceAudit, type AuditEntry } from "@/lib/audit";
+import { actorFrom, logAudit, replaceAudit } from "@/lib/audit";
+import { buildBackup, backupFileName, type Backup } from "@/lib/backup";
 import { errorJson, json } from "@/lib/http";
-import { getSettings, listDeadlines, saveSettings } from "@/lib/service";
+import { saveSettings } from "@/lib/service";
 import { getStore } from "@/lib/store";
-import type { Contract, Deadline, Settings } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-interface Backup {
-  app: "scadenziario-greco";
-  version: 1;
-  exportedAt: string;
-  deadlines: Deadline[];
-  contracts: Contract[];
-  settings: Settings;
-  audit: AuditEntry[];
-}
 
 /** Copia di sicurezza completa (scadenze, storico, contratti, impostazioni, diario). */
 export async function GET() {
   try {
-    const backup: Backup = {
-      app: "scadenziario-greco",
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      deadlines: await listDeadlines(),
-      contracts: await getStore().listContracts(),
-      settings: await getSettings(),
-      audit: await listAudit(),
-    };
-    const day = backup.exportedAt.slice(0, 10).replace(/-/g, "");
+    const backup = await buildBackup();
     return new Response(JSON.stringify(backup, null, 2), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="scadenziario-greco-backup-${day}.json"`,
+        "Content-Disposition": `attachment; filename="${backupFileName(backup)}"`,
         "Cache-Control": "no-store",
       },
     });

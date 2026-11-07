@@ -91,6 +91,12 @@ export interface Settings {
   appUrl: string;
   /** Email a cui inviare il link per reimpostare la password. */
   recoveryEmail: string;
+  /** Invio automatico settimanale del backup per email. */
+  weeklyBackup: boolean;
+  /** Email del backup (se vuota: email di recupero, poi email avvisi). */
+  backupEmail: string;
+  /** Giorno della settimana per il backup (0 = domenica … 6 = sabato). */
+  backupWeekday: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -102,6 +108,9 @@ export const DEFAULT_SETTINGS: Settings = {
   overdueReminder: false,
   appUrl: "",
   recoveryEmail: "",
+  weeklyBackup: true,
+  backupEmail: "",
+  backupWeekday: 1,
 };
 
 export const CATEGORY_LABELS: Record<Category, string> = {

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, EyeOff, FileSpreadsheet, KeyRound, RefreshCw, Save, ShieldCheck, Upload, UserRound } from "lucide-react";
+import { Download, Eye, EyeOff, FileSpreadsheet, KeyRound, MailCheck, RefreshCw, Save, Send, ShieldCheck, Upload, UserRound } from "lucide-react";
 import type { Settings } from "@/lib/types";
 import { api, deviceName, isDemo, setDeviceName } from "./api";
 import type { Notify } from "./feedback";
@@ -349,6 +349,7 @@ export function DataSection({ notify }: { notify: Notify }) {
   };
 
   return (
+    <div className="space-y-6">
     <section className={card}>
       <h3 className="mb-1 text-2xl font-extrabold">I tuoi dati sono al sicuro</h3>
       <div className={`mt-2 rounded-xl p-4 text-lg ${storage && !storage.persistent ? "bg-amber-50 text-amber-900" : "bg-green-50 text-green-950"}`}>
@@ -375,6 +376,99 @@ export function DataSection({ notify }: { notify: Notify }) {
           <input type="file" accept="application/json,.json" className="sr-only" onChange={(e) => void restore(e.target.files?.[0])} disabled={busy} />
         </label>
       </div>
+    </section>
+    <WeeklyBackupCard notify={notify} />
+    </div>
+  );
+}
+
+const WEEKDAYS = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+
+/** Backup automatico settimanale per email. */
+function WeeklyBackupCard({ notify }: { notify: Notify }) {
+  const [s, setS] = useState<Settings | null>(null);
+  const [last, setLast] = useState<{ at: string; to: string; ok: boolean; detail: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    const r = await api<{ settings: Settings }>("/api/settings");
+    setS(r.settings);
+    if (!isDemo()) setLast((await api<{ last: typeof last }>("/api/backup/email").catch(() => ({ last: null }))).last);
+  };
+  useEffect(() => {
+    void load().catch(() => undefined);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!s) return null;
+  const fallback = s.recoveryEmail || s.email;
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await api("/api/settings", "PUT", s);
+      notify("💾 Impostazioni del backup salvate");
+    } catch (e) {
+      notify(`Errore: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendNow = async () => {
+    setBusy(true);
+    try {
+      await api("/api/settings", "PUT", s);
+      const r = await api<{ ok: boolean; detail: string }>("/api/backup/email", "POST");
+      notify(r.ok ? `📧 Backup inviato a ${s.backupEmail || fallback}` : `Non inviato: ${r.detail}`);
+      await load();
+    } catch (e) {
+      notify(`Non inviato: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className={card}>
+      <h3 className="mb-1 flex items-center gap-2 text-2xl font-extrabold">
+        <MailCheck className="h-7 w-7" aria-hidden /> Backup automatico per email
+      </h3>
+      <p className="mb-3 text-base text-slate-600">Una volta a settimana, la mattina, arriva per email il file di backup completo da conservare.</p>
+      {isDemo() ? (
+        <p className="rounded-xl bg-amber-50 p-4 text-lg text-amber-900">Disponibile solo nell&apos;app pubblicata online.</p>
+      ) : (
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 text-lg font-semibold">
+            <input type="checkbox" className="h-6 w-6" checked={s.weeklyBackup} onChange={(e) => setS({ ...s, weeklyBackup: e.target.checked })} />
+            Invia il backup ogni settimana
+          </label>
+          <div>
+            <label className="label" htmlFor="bk-email">Email che riceve il backup</label>
+            <input id="bk-email" type="email" className="field" value={s.backupEmail} onChange={(e) => setS({ ...s, backupEmail: e.target.value })} placeholder={fallback || "nome@esempio.it"} />
+            {!s.backupEmail && fallback && <p className="mt-1 text-sm text-slate-500">Se lasci vuoto si usa {fallback}</p>}
+          </div>
+          <div>
+            <label className="label" htmlFor="bk-day">Giorno dell&apos;invio</label>
+            <select id="bk-day" className="field" value={s.backupWeekday} onChange={(e) => setS({ ...s, backupWeekday: Number(e.target.value) })}>
+              {WEEKDAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
+            </select>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button className="btn-green" onClick={() => void save()} disabled={busy}>
+              <Save className="h-5 w-5" aria-hidden /> Salva
+            </button>
+            <button className="btn-ghost" onClick={() => void sendNow()} disabled={busy}>
+              <Send className="h-5 w-5" aria-hidden /> {busy ? "Invio…" : "Invia backup adesso"}
+            </button>
+          </div>
+          <p className={`rounded-xl p-3 text-base ${last ? (last.ok ? "bg-green-50 text-green-900" : "bg-red-50 text-red-900") : "bg-slate-50 text-slate-600"}`}>
+            {last
+              ? `${last.ok ? "✅ Ultimo backup inviato" : "❌ Ultimo tentativo fallito"} il ${new Date(last.at).toLocaleString("it-IT", { timeZone: "Europe/Rome" })} a ${last.to}${last.ok ? "" : ` – ${last.detail}`}`
+              : "Nessun backup ancora inviato per email."}
+          </p>
+          <p className="text-sm text-slate-500">Serve il servizio email (Resend) attivo sul sito e la variabile CRON_SECRET per l&apos;invio automatico.</p>
+        </div>
+      )}
     </section>
   );
 }

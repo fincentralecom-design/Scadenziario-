@@ -35,12 +35,16 @@ export async function PUT(req: Request) {
       overdueReminder: !!b.overdueReminder,
       appUrl: String(b.appUrl ?? "").trim().slice(0, 300),
       recoveryEmail: String(b.recoveryEmail ?? "").trim().slice(0, 200),
+      weeklyBackup: b.weeklyBackup === undefined ? true : !!b.weeklyBackup,
+      backupEmail: String(b.backupEmail ?? "").trim().slice(0, 200),
+      backupWeekday: Math.min(6, Math.max(0, Math.round(Number(b.backupWeekday ?? 1)) || 0)),
     };
+    if (clean.backupEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean.backupEmail)) throw new Error("Email del backup non valida");
     if (clean.recoveryEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean.recoveryEmail)) throw new Error("Email di recupero non valida");
     const before = await getSettings();
     if (clean.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean.email)) throw new Error("Email non valida");
     const saved = await saveSettings(clean);
-    const labels: Record<string, string> = { recipientName: "Nome destinatario", email: "Email", whatsapp: "WhatsApp", sms: "SMS", overdueReminder: "Sollecito", appUrl: "Indirizzo app", recoveryEmail: "Email di recupero" };
+    const labels: Record<string, string> = { recipientName: "Nome destinatario", email: "Email", whatsapp: "WhatsApp", sms: "SMS", overdueReminder: "Sollecito", appUrl: "Indirizzo app", recoveryEmail: "Email di recupero", weeklyBackup: "Backup settimanale", backupEmail: "Email backup", backupWeekday: "Giorno backup" };
     const changes = Object.entries(labels)
       .filter(([k]) => JSON.stringify(before[k as keyof Settings]) !== JSON.stringify(saved[k as keyof Settings]))
       .map(([k, field]) => ({ field, from: String(before[k as keyof Settings] || "—"), to: String(saved[k as keyof Settings] || "—") }));

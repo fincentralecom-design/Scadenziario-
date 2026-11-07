@@ -151,7 +151,7 @@ export default function AskChat({ onClose }: { onClose: () => void }) {
               </span>
             </div>
           )}
-          {mode === "base" && <p className="pl-9 text-sm text-slate-500">Modalità base: per risposte complete serve la chiave AI sul sito.</p>}
+          {mode === "base" && <p className="pl-9 text-sm text-slate-500">Modalità base: per parlare con l'AI (Gemini) serve la chiave Gemini sul sito.</p>}
           <div ref={endRef} />
         </div>
 

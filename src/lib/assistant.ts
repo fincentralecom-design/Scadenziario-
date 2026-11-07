@@ -1,10 +1,9 @@
-// Assistente AI (Claude) che trasforma frasi libere o dettate in scadenze strutturate.
+// Assistente AI (Google Gemini) che trasforma frasi libere o dettate in scadenze strutturate.
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { formatLong } from "./dates";
 import { quickParse, type DeadlineDraft } from "./quickParse";
+import { geminiConfigured, geminiGenerate, parseJsonLoose } from "./gemini";
 
 const DraftSchema = z.object({
   title: z.string().describe("Titolo breve e chiaro in italiano"),
@@ -38,50 +37,30 @@ export interface ChatTurn {
   content: string;
 }
 
-/** Modello AI: Claude Haiku 5.5 (il più economico), modificabile con la variabile AI_MODEL (es. claude-opus-5-5, più capace). */
-export function aiModel(): string {
-  return process.env.AI_MODEL?.trim() || "claude-haiku-5-5";
-}
-
-/** Il fallback lato server sui rifiuti è disponibile solo su alcuni modelli. */
-export function fallbackParams(): { betas?: string[]; fallbacks?: "default" } {
-  return /^claude-(opus-5|opus-5-5|fable-5-1|sonnet-5-5)$/.test(aiModel()) ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" } : {};
-}
-
+/** L'AI usata è Google Gemini: attiva quando è impostata GEMINI_API_KEY. */
 export function aiConfigured(): boolean {
-  return !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+  return geminiConfigured();
 }
+
+const JSON_HINT = `
+Rispondi SOLO con un oggetto JSON di questa forma, senza altro testo:
+{"reply": "risposta breve in italiano", "deadlines": [{"title": "...", "category": "mensile|trimestrale|annuale|locazione|sicurezza|altro", "dueDate": "YYYY-MM-DD", "recurrence": "una_tantum|mensile|trimestrale|semestrale|annuale", "amount": numero o null, "f24Code": "..." o null, "portal": "..." o null, "notes": "..." o null, "shiftIfHoliday": true|false}]}`;
 
 export async function runAssistant(turns: ChatTurn[], today: string): Promise<{ reply: string; deadlines: DeadlineDraft[]; mode: "ai" | "base" }> {
   const last = [...turns].reverse().find((t) => t.role === "user")?.content ?? "";
   if (!aiConfigured()) return { ...quickParse(last, today), mode: "base" };
-
-  const client = new Anthropic();
-  // La data di oggi va in fondo (non nel prompt di sistema) per non invalidare la cache.
-  const messages: Anthropic.Beta.BetaMessageParam[] = turns.slice(-12).map((t) => ({ role: t.role, content: t.content }));
-  messages.push({ role: "user", content: `(Oggi è ${formatLong(today)}, ${today}.)` });
-
   try {
-    const response = await client.beta.messages.parse({
-      model: aiModel(),
-      max_tokens: 16000,
-      ...fallbackParams(),
-      output_config: { effort: "low", format: betaZodOutputFormat(ReplySchema) },
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-      messages,
+    const text = await geminiGenerate({
+      system: SYSTEM + JSON_HINT,
+      turns: [...turns.slice(-12), { role: "user", content: `(Oggi è ${formatLong(today)}, ${today}.)` }],
+      json: true,
     });
-    if (response.stop_reason === "refusal" || !response.parsed_output) {
-      return { ...quickParse(last, today), mode: "base" };
-    }
-    const deadlines = response.parsed_output.deadlines.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d.dueDate) && d.title.trim());
-    return { reply: response.parsed_output.reply, deadlines, mode: "ai" };
+    const parsed = ReplySchema.safeParse(parseJsonLoose(text));
+    if (!parsed.success) return { ...quickParse(last, today), mode: "base" };
+    const deadlines = parsed.data.deadlines.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d.dueDate) && d.title.trim());
+    return { reply: parsed.data.reply, deadlines, mode: "ai" };
   } catch (e) {
-    if (e instanceof Anthropic.AuthenticationError) {
-      return { ...quickParse(last, today), reply: `${quickParse(last, today).reply} (Chiave AI non valida: uso l'interprete di base.)`, mode: "base" };
-    }
-    if (e instanceof Anthropic.RateLimitError || e instanceof Anthropic.APIConnectionError || e instanceof Anthropic.InternalServerError) {
-      return { ...quickParse(last, today), mode: "base" };
-    }
-    throw e;
+    console.error("Gemini (assistente):", e);
+    return { ...quickParse(last, today), mode: "base" };
   }
 }

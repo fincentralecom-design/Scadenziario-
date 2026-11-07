@@ -12,7 +12,6 @@
     "build:demo": "node scripts/build-demo.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.6.0",
     "@netlify/blobs": "^11.1.8",
     "@supabase/supabase-js": "^2.119.0",
     "jspdf": "^4.2.1",

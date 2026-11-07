@@ -1,8 +1,8 @@
-// "Chiedi allo Scadenziario": Claude risponde alle domande leggendo tutti i dati dell'app.
+// "Chiedi allo Scadenziario": Google Gemini risponde alle domande leggendo tutti i dati dell'app.
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
 import { listAudit } from "./audit";
-import { aiConfigured, aiModel, fallbackParams, type ChatTurn } from "./assistant";
+import { aiConfigured, type ChatTurn } from "./assistant";
+import { geminiGenerate } from "./gemini";
 import { formatLong } from "./dates";
 import { daysLeft, effectiveDate, f24CodeFor } from "./deadlines";
 import { localAnswer } from "./localAnswer";
@@ -79,41 +79,19 @@ export async function askScadenziario(turns: ChatTurn[], today: string): Promise
   const question = [...turns].reverse().find((t) => t.role === "user")?.content ?? "";
   if (!aiConfigured()) return { answer: localAnswer(question, await listDeadlines(), today), mode: "base" };
 
-  const client = new Anthropic();
   const context = await buildContext(today);
-  // I dati vanno nel primo messaggio: la conversazione resta in coda, così la cache del prompt regge.
-  const messages: Anthropic.Beta.BetaMessageParam[] = [
-    {
-      role: "user",
-      // In cache: le domande successive sugli stessi dati costano circa un decimo.
-      content: [{ type: "text", text: `Dati attuali dello scadenziario (oggi è ${formatLong(today)}):\n${context}`, cache_control: { type: "ephemeral" } }],
-    },
-    { role: "assistant", content: "Ho letto tutti i dati dello scadenziario. Sono pronto a chiacchierare e rispondere a qualsiasi domanda." },
-    ...turns.slice(-10).map((t) => ({ role: t.role, content: t.content }) as Anthropic.Beta.BetaMessageParam),
-  ];
-
   try {
-    const response = await client.beta.messages.create({
-      model: aiModel(),
-      max_tokens: 16000,
-      ...fallbackParams(),
-      output_config: { effort: "low" },
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-      messages,
+    const answer = await geminiGenerate({
+      system: SYSTEM,
+      turns: [
+        { role: "user", content: `Dati attuali dello scadenziario (oggi è ${formatLong(today)}):\n${context}` },
+        { role: "assistant", content: "Ho letto tutti i dati dello scadenziario. Sono pronto a chiacchierare e rispondere a qualsiasi domanda." },
+        ...turns.slice(-10),
+      ],
     });
-    if (response.stop_reason === "refusal") {
-      return { answer: "Non posso rispondere a questa domanda. Prova a riformularla.", mode: "ai" };
-    }
-    const text = response.content
-      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
-    return { answer: text || "Non ho trovato una risposta.", mode: "ai" };
+    return { answer, mode: "ai" };
   } catch (e) {
-    if (e instanceof Anthropic.RateLimitError || e instanceof Anthropic.APIConnectionError || e instanceof Anthropic.InternalServerError || e instanceof Anthropic.AuthenticationError) {
-      return { answer: localAnswer(question, await listDeadlines(), today), mode: "base" };
-    }
-    throw e;
+    console.error("Gemini (chat):", e);
+    return { answer: localAnswer(question, await listDeadlines(), today), mode: "base" };
   }
 }

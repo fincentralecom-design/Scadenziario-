@@ -139,7 +139,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
           <li>“Revisione caldaia tra 2 mesi”</li>
         </ul>
         <p>L&apos;assistente prepara la scadenza: controllala e premi <b>Salva</b> (o <b>Modifica</b> per correggerla nel modulo). Puoi dettare più scadenze insieme.</p>
-        <p>Se il microfono non compare, usa il microfono della tastiera dell&apos;iPhone. Con la chiave AI configurata (vedi Netlify) l&apos;assistente capisce anche frasi complesse e aggiunge da solo codici F24 e note.</p>
+        <p>Se il microfono non compare, usa il microfono della tastiera dell&apos;iPhone. Con la chiave Gemini configurata (vedi Netlify) l&apos;assistente capisce anche frasi complesse e aggiunge da solo codici F24 e note.</p>
       </>
     ),
   },
@@ -196,7 +196,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
           <li><code>RESEND_API_KEY</code> + <code>EMAIL_FROM</code>: invio email con Resend. Senza dominio verificato si usa <code>onboarding@resend.dev</code> e le email arrivano solo all&apos;indirizzo dell&apos;account Resend.</li>
           <li><code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>, <code>TWILIO_SMS_FROM</code>, <code>TWILIO_WHATSAPP_FROM</code>: SMS e WhatsApp.</li>
           <li><code>APP_USERNAME</code> / <code>APP_PASSWORD</code>: cambiano utente e password di accesso.</li>
-          <li><code>ANTHROPIC_API_KEY</code>: attiva l&apos;assistente AI completo (senza, funziona in modalità base).</li>
+          <li><code>GEMINI_API_KEY</code>: attiva l&apos;AI (Google Gemini, gratuita) per la chat “Chiedi” e l&apos;assistente. Senza, funzionano in modalità base.</li>
         </ul>
         <p>Le esecuzioni automatiche si vedono in Netlify → Logs → Functions → <b>check-deadlines</b>.</p>
       </>

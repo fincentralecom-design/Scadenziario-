@@ -1,6 +1,7 @@
 import { hourRome } from "@/lib/dates";
 import { json, errorJson } from "@/lib/http";
 import { runDailyCheck } from "@/lib/service";
+import { weeklyBackupIfDue } from "@/lib/backup";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -35,10 +36,13 @@ async function handle(req: Request) {
       return json({ skipped: true, reason: `Sono le ${hour} in Italia: il controllo parte dalle ${ALERT_HOUR}:00.` });
     }
     const res = await runDailyCheck({ today: date, dryRun });
+    // Backup settimanale per email (solo nei controlli reali, non nelle simulazioni).
+    const backup = !dryRun && !date ? await weeklyBackupIfDue(res.today).catch((e: unknown) => ({ ok: false, detail: String(e) })) : null;
     return json({
       today: res.today,
       dryRun: res.dryRun,
       count: res.alerts.length,
+      backup,
       alerts: res.alerts.map((a) => ({ subject: a.subject, kind: a.kind, dueDate: a.dueDate, alreadySent: a.alreadySent, results: a.results })),
     });
   } catch (e) {

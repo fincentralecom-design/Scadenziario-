@@ -50,13 +50,19 @@ async function sendEmail(to: string, msg: AlertMessage): Promise<SendResult> {
 }
 
 /** Invia una email qualsiasi con il provider configurato (Resend o Brevo). */
-export async function sendPlainEmail(to: string, subject: string, html: string, text: string): Promise<SendResult> {
+export async function sendPlainEmail(
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+  attachments: { filename: string; content: string }[] = [],
+): Promise<SendResult> {
   const from = env("EMAIL_FROM") || "Scadenziario Anthony Greco <onboarding@resend.dev>";
   if (env("RESEND_API_KEY")) {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env("RESEND_API_KEY")}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [to], subject, html, text }),
+      body: JSON.stringify({ from, to: [to], subject, html, text, ...(attachments.length ? { attachments } : {}) }),
     });
     return { channel: "email", provider: "Resend", ok: res.ok, detail: res.ok ? `Inviata a ${to}` : await readError(res) };
   }
@@ -66,7 +72,7 @@ export async function sendPlainEmail(to: string, subject: string, html: string, 
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { "api-key": env("BREVO_API_KEY"), "Content-Type": "application/json" },
-      body: JSON.stringify({ sender, to: [{ email: to }], subject, htmlContent: html, textContent: text }),
+      body: JSON.stringify({ sender, to: [{ email: to }], subject, htmlContent: html, textContent: text, ...(attachments.length ? { attachment: attachments.map((a) => ({ name: a.filename, content: a.content })) } : {}) }),
     });
     return { channel: "email", provider: "Brevo", ok: res.ok, detail: res.ok ? `Inviata a ${to}` : await readError(res) };
   }

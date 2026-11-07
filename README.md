@@ -21,7 +21,8 @@ nelle variabili d'ambiente di Netlify e rifai il deploy. Restano accessibili sen
 - **Calendario iPhone**: abbonamento `webcal://` che si aggiorna da solo, export `.ics` con promemoria -3 giorni e giorno stesso.
 - **Assistente AI** nella scheda Aggiungi: crea scadenze da testo libero o dettatura vocale.
 - **Chiedi allo Scadenziario** (pulsante sul Cruscotto): chat AI che conversa e risponde leggendo scadenze, pagamenti, contratti e diario.
-- Le funzioni AI usano l'API di Claude (`ANTHROPIC_API_KEY`, a consumo). Modello predefinito **Claude Haiku 5.5** (il più economico, impostabile con `AI_MODEL`); senza chiave l'app usa un interprete locale di base.
+- Le funzioni AI usano **Google Gemini** (`GEMINI_API_KEY`, livello gratuito di Google AI Studio; modello `gemini-flash-latest`, impostabile con `GEMINI_MODEL`). Senza chiave l'app usa un interprete locale di base.
+- **Backup settimanale per email** con il file allegato (Impostazioni → Dati e backup).
 - **Filtri avanzati** sull'elenco ed **esportazione Excel / PDF** dell'elenco filtrato.
 
 ## Funzioni principali
