@@ -3,6 +3,8 @@ import { listDeadlines, sanitizeDeadline } from "@/lib/service";
 import { getStore } from "@/lib/store";
 import { todayRome } from "@/lib/dates";
 import type { Deadline } from "@/lib/types";
+import { actorFrom, logAudit } from "@/lib/audit";
+import { formatShort } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,8 @@ export async function POST(req: Request) {
     const body = (await req.json()) as Partial<Deadline>;
     const d = sanitizeDeadline({ ...body, id: undefined });
     await getStore().upsertDeadlines([d]);
+    const { actor, device } = actorFrom(req);
+    await logAudit({ action: "creata", actor, device, via: "app", target: d.title, targetId: d.id, summary: `Nuova scadenza per il ${formatShort(d.dueDate)}` });
     return json(d, 201);
   } catch (e) {
     return errorJson(e);

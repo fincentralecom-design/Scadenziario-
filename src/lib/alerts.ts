@@ -109,7 +109,7 @@ export function buildAlert(d: Deadline, kind: AlertKind, today: string, settings
     </div>
     <p style="font-size:13px;color:#64748b;text-align:center">Il pulsante apre una pagina dove confermare con un solo tocco, senza password.</p>
   </div>
-  <p style="font-size:12px;color:#94a3b8;text-align:center">Scadenziario Greco – avviso automatico</p>
+  <p style="font-size:12px;color:#94a3b8;text-align:center">Scadenziario Anthony Greco – avviso automatico</p>
 </div></body></html>`;
 
   return {

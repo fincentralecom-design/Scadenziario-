@@ -39,12 +39,33 @@ export function downloadCalendar(id?: string) {
 
 export const isDemo = () => !!demo();
 
+const DEVICE_KEY = "sg-device-name";
+
+/** Nome di chi usa questo dispositivo (es. "Anthony"), registrato nel diario attività. */
+export function deviceName(): string {
+  try {
+    return localStorage.getItem(DEVICE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function setDeviceName(name: string) {
+  try {
+    localStorage.setItem(DEVICE_KEY, name.trim().slice(0, 40));
+  } catch {
+    /* ignora */
+  }
+}
+
 export async function api<T>(url: string, method = "GET", body?: unknown): Promise<T> {
   const d = demo();
   if (d) return (await d.api(url, method, body)) as T;
+  const headers: Record<string, string> = { "x-device-name": encodeURIComponent(deviceName()) };
+  if (body) headers["Content-Type"] = "application/json";
   const res = await fetch(url, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });

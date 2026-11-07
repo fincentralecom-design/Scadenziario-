@@ -1,4 +1,4 @@
-# Scadenziario Greco – Affittacamere, P.IVA & Locazioni
+# Scadenziario Anthony Greco – Affittacamere, P.IVA & Locazioni
 
 _By Bruno Greco_
 
@@ -19,7 +19,9 @@ nelle variabili d'ambiente di Netlify e rifai il deploy. Restano accessibili sen
 - **Menu ad hamburger**, schede richiudibili, pulsante rapido “+”, animazioni, vibrazione e “Annulla” dopo ogni conferma.
 - **Installabile sulla Home dell'iPhone** (icone e manifest) con **notifiche push** gratuite (iOS 16.4+), oltre a Email/WhatsApp/SMS.
 - **Calendario iPhone**: abbonamento `webcal://` che si aggiorna da solo, export `.ics` con promemoria -3 giorni e giorno stesso.
-- **Assistente AI** nella scheda Aggiungi: crea scadenze da testo libero o dettatura vocale (Claude, `ANTHROPIC_API_KEY`; senza chiave usa un interprete locale).
+- **Assistente AI** nella scheda Aggiungi: crea scadenze da testo libero o dettatura vocale.
+- **Chiedi allo Scadenziario** (pulsante sul Cruscotto): chat AI che conversa e risponde leggendo scadenze, pagamenti, contratti e diario.
+- Le funzioni AI usano l'API di Claude (`ANTHROPIC_API_KEY`, a consumo). Modello predefinito **Claude Haiku 5.5** (il più economico, impostabile con `AI_MODEL`); senza chiave l'app usa un interprete locale di base.
 - **Filtri avanzati** sull'elenco ed **esportazione Excel / PDF** dell'elenco filtrato.
 
 ## Funzioni principali

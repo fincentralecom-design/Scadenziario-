@@ -4,9 +4,10 @@ import { effectiveDate, f24CodeFor, formatEuro } from "@/lib/deadlines";
 import { completeById, undoById } from "@/lib/service";
 import { getStore } from "@/lib/store";
 import { verifyDeadlineToken } from "@/lib/token";
+import { logAudit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Conferma scadenza – Scadenziario Greco", robots: { index: false } };
+export const metadata = { title: "Conferma scadenza – Scadenziario Anthony Greco", robots: { index: false } };
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ t?: string; ok?: string; undone?: string }> };
 
@@ -28,7 +29,17 @@ export default async function ConfermaPage({ params, searchParams }: Props) {
     const cur = await getStore().getDeadline(id);
     if (cur && cur.status === "todo" && verifyDeadlineToken(id, cur.dueDate, token)) {
       const note = String(formData.get("note") || "").slice(0, 500);
-      await completeById(id, { via: "magic-link", note: note || "Confermato dal link ricevuto" });
+      const done = await completeById(id, { via: "magic-link", note: note || "Confermato dal link ricevuto" });
+      if (done) {
+        await logAudit({
+          action: "completata",
+          actor: "Link di conferma",
+          via: "link",
+          target: done.title,
+          targetId: id,
+          summary: `Confermata dal link ricevuto (scadenza del ${formatShort(done.history[0].dueDate)})${note ? ` · nota: “${note}”` : ""}`,
+        });
+      }
     }
     redirect(`/conferma/${encodeURIComponent(id)}?t=${encodeURIComponent(token)}&ok=1`);
   }
@@ -39,7 +50,8 @@ export default async function ConfermaPage({ params, searchParams }: Props) {
     const cur = await getStore().getDeadline(id);
     const last = cur?.history[0];
     if (cur && last && verifyDeadlineToken(id, last.nominalDueDate, token) && Date.now() - Date.parse(last.completedAt) < UNDO_WINDOW_MS) {
-      await undoById(id);
+      const d2 = await undoById(id);
+      if (d2) await logAudit({ action: "annullata", actor: "Link di conferma", via: "link", target: d2.title, targetId: id, summary: "Conferma annullata dalla pagina del link" });
     }
     redirect(`/conferma/${encodeURIComponent(id)}?t=${encodeURIComponent(token)}&undone=1`);
   }
@@ -115,7 +127,7 @@ export default async function ConfermaPage({ params, searchParams }: Props) {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-xl px-4 py-8">
-      <p className="mb-6 text-center text-lg font-bold text-blue-800">📅 Scadenziario Greco</p>
+      <p className="mb-6 text-center text-lg font-bold text-blue-800">📅 Scadenziario Anthony Greco</p>
       {children}
     </main>
   );

@@ -1,6 +1,8 @@
 import { errorJson, json } from "@/lib/http";
 import { completeById } from "@/lib/service";
-import type { CompletionInput } from "@/lib/deadlines";
+import { formatEuro, type CompletionInput } from "@/lib/deadlines";
+import { actorFrom, logAudit } from "@/lib/audit";
+import { formatShort } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 const MAX_RECEIPT = 2_800_000; // ~2 MB di file in base64
@@ -21,6 +23,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       via: "app",
     });
     if (!d) return json({ error: "Scadenza non trovata" }, 404);
+    const h = d.history[0];
+    const { actor, device } = actorFrom(req);
+    await logAudit({
+      action: "completata",
+      actor,
+      device,
+      via: "app",
+      target: d.title,
+      targetId: d.id,
+      summary: [
+        `Segnata come fatta (scadenza del ${formatShort(h.dueDate)})`,
+        h.amountPaid ? `pagato ${formatEuro(h.amountPaid)}` : "",
+        h.receiptName ? "ricevuta allegata" : "",
+        h.note ? `nota: “${h.note}”` : "",
+        d.status === "todo" ? `prossima: ${formatShort(d.dueDate)}` : "",
+      ].filter(Boolean).join(" · "),
+    });
     return json(d);
   } catch (e) {
     return errorJson(e);

@@ -30,7 +30,7 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1d4ed8">
-<title>Scadenziario Pro – versione locale</title>
+<title>Scadenziario Anthony Greco</title>
 <link rel="icon" href="data:image/svg+xml;base64,${icon}">
 <style>${css}</style>
 </head>

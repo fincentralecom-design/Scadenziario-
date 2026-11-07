@@ -158,7 +158,7 @@ export default function PushCard({ notify }: { notify: Notify }) {
       )}
 
       {state !== "demo" && state !== "loading" && (
-        <p className="mt-3 text-base text-slate-500">Dispositivi iscritti: {devices}. Puoi attivarle su più telefoni (es. tuo e di papà).</p>
+        <p className="mt-3 text-base text-slate-500">Dispositivi iscritti: {devices}. Puoi attivarle su più telefoni (es. tuo e di Anthony).</p>
       )}
 
       <hr className="my-5 border-slate-200" />

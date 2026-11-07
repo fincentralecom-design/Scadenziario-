@@ -89,16 +89,19 @@ export interface Settings {
   overdueReminder: boolean;
   /** URL pubblico dell'app, usato nei magic link. */
   appUrl: string;
+  /** Email a cui inviare il link per reimpostare la password. */
+  recoveryEmail: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  recipientName: "Papà",
+  recipientName: "Anthony",
   email: "",
   whatsapp: "",
   sms: "",
   channels: { email: true, whatsapp: true, sms: true, push: true },
   overdueReminder: false,
   appUrl: "",
+  recoveryEmail: "",
 };
 
 export const CATEGORY_LABELS: Record<Category, string> = {

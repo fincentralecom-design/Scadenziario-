@@ -28,10 +28,10 @@ export function buildIcs(deadlines: Deadline[], today: string, months = 12, appU
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Scadenziario Greco//IT",
+    "PRODID:-//Scadenziario Anthony Greco//IT",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:Scadenziario Greco",
+    "X-WR-CALNAME:Scadenziario Anthony Greco",
     "X-WR-TIMEZONE:Europe/Rome",
     "REFRESH-INTERVAL;VALUE=DURATION:PT6H",
     "X-PUBLISHED-TTL:PT6H",

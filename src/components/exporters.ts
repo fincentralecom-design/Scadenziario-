@@ -56,7 +56,7 @@ export async function exportPdf(list: Deadline[], today: string, filtersLabel: s
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   doc.setFontSize(18);
   doc.setTextColor(29, 78, 216);
-  doc.text("Scadenziario Greco", 14, 15);
+  doc.text("Scadenziario Anthony Greco", 14, 15);
   doc.setFontSize(10);
   doc.setTextColor(90);
   doc.text(`By Bruno Greco · Elenco scadenze al ${formatShort(today)} · ${list.length} voci`, 14, 21);

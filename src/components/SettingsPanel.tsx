@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { CircleCheck, CircleX, Mail, MessageCircle, PlayCircle, Save, Send, Smartphone } from "lucide-react";
+import { BellRing, CircleCheck, CircleX, Database, History, KeyRound, Mail, MessageCircle, PlayCircle, Save, Send, Smartphone } from "lucide-react";
 import { todayRome } from "@/lib/dates";
 import type { Settings } from "@/lib/types";
 import { api } from "./api";
 import type { Notify } from "./feedback";
 import PushCard from "./PushCard";
+import { AccountSection, AuditLog, DataSection } from "./SettingsSections";
 
 interface SettingsResponse {
   settings: Settings;
@@ -45,7 +46,17 @@ function WaText({ text }: { text: string }) {
   );
 }
 
-export default function SettingsPanel({ notify }: { notify: Notify }) {
+export type SettingsSection = "avvisi" | "telefono" | "account" | "diario" | "dati";
+
+const SECTIONS: { id: SettingsSection; label: string; icon: typeof Mail }[] = [
+  { id: "avvisi", label: "Avvisi", icon: BellRing },
+  { id: "telefono", label: "Telefono e Calendario", icon: Smartphone },
+  { id: "account", label: "Account e password", icon: KeyRound },
+  { id: "diario", label: "Diario attività", icon: History },
+  { id: "dati", label: "Dati e backup", icon: Database },
+];
+
+export default function SettingsPanel({ notify, section = "avvisi", onSection }: { notify: Notify; section?: SettingsSection; onSection: (s: SettingsSection) => void }) {
   const [info, setInfo] = useState<SettingsResponse | null>(null);
   const [s, setS] = useState<Settings | null>(null);
   const [date, setDate] = useState(todayRome());
@@ -102,6 +113,24 @@ export default function SettingsPanel({ notify }: { notify: Notify }) {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="mb-3 text-3xl font-extrabold text-slate-900">Impostazioni</h2>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+          {SECTIONS.map((x) => (
+            <button
+              key={x.id}
+              onClick={() => onSection(x.id)}
+              className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2.5 text-base font-bold transition active:scale-95 ${section === x.id ? "border-blue-700 bg-blue-700 text-white" : "border-slate-300 bg-white text-slate-800"}`}
+              aria-pressed={section === x.id}
+            >
+              <x.icon className="h-5 w-5" aria-hidden /> {x.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {section === "avvisi" && (
+      <>
       <form onSubmit={save} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-1 text-2xl font-extrabold">Chi riceve gli avvisi</h2>
         <p className="mb-4 text-base text-slate-600">
@@ -110,7 +139,7 @@ export default function SettingsPanel({ notify }: { notify: Notify }) {
         <div className="space-y-4">
           <div>
             <label className="label" htmlFor="s-name">Nome destinatario</label>
-            <input id="s-name" className="field" value={s.recipientName} onChange={(e) => set("recipientName", e.target.value)} placeholder="Es. Papà" />
+            <input id="s-name" className="field" value={s.recipientName} onChange={(e) => set("recipientName", e.target.value)} placeholder="Es. Anthony" />
           </div>
           {channels.map((c) => (
             <div key={c.key} className="rounded-xl border-2 border-slate-200 p-4">
@@ -154,8 +183,14 @@ export default function SettingsPanel({ notify }: { notify: Notify }) {
         )}
       </form>
 
-      <PushCard notify={notify} />
+      </>
+      )}
 
+      {section === "telefono" && <PushCard notify={notify} />}
+      {section === "account" && <AccountSection notify={notify} settings={s} setSettings={setS} onSaved={load} />}
+      {section === "diario" && <AuditLog notify={notify} />}
+
+      {section === "avvisi" && (
       <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-1 text-2xl font-extrabold">Test degli avvisi</h2>
         <p className="mb-4 text-base text-slate-600">
@@ -236,7 +271,11 @@ export default function SettingsPanel({ notify }: { notify: Notify }) {
           </div>
         )}
       </section>
+      )}
 
+      {section === "dati" && (
+      <>
+      <DataSection notify={notify} />
       <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-2 text-2xl font-extrabold">Controllo automatico giornaliero</h2>
         <p className="text-base text-slate-700">
@@ -256,6 +295,8 @@ export default function SettingsPanel({ notify }: { notify: Notify }) {
           </ul>
         )}
       </section>
+      </>
+      )}
     </div>
   );
 }

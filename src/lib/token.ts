@@ -3,7 +3,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 function secret(): string {
-  return process.env.MAGIC_LINK_SECRET || process.env.CRON_SECRET || "dev-only-insecure-secret-change-me";
+  return process.env.MAGIC_LINK_SECRET || process.env.CRON_SECRET || process.env.BUILD_SECRET || "dev-only-insecure-secret-change-me";
 }
 
 export function signDeadline(id: string, nominalDueDate: string): string {

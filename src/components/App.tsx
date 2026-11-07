@@ -1,13 +1,14 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { BellRing, BookOpen, CalendarCheck, FileText, LogOut, Menu, Plus, PlusCircle, TriangleAlert, X } from "lucide-react";
+import { BookOpen, History, MessageCircleQuestion, Settings as SettingsIcon, CalendarCheck, FileText, LogOut, Menu, Plus, PlusCircle, TriangleAlert, X } from "lucide-react";
 import { api, type AppData } from "./api";
 import Dashboard from "./Dashboard";
 import DeadlineManager from "./DeadlineManager";
 import Contracts from "./Contracts";
-import SettingsPanel from "./SettingsPanel";
+import SettingsPanel, { type SettingsSection } from "./SettingsPanel";
 import Guide from "./Guide";
 import Splash from "./Splash";
+import AskChat from "./AskChat";
 import type { Deadline } from "@/lib/types";
 import type { Notify, ToastAction } from "./feedback";
 
@@ -18,7 +19,7 @@ const TABS: { id: Tab; label: string; short: string; icon: typeof CalendarCheck 
   { id: "dashboard", label: "Cruscotto Scadenze", short: "Cruscotto", icon: CalendarCheck },
   { id: "edit", label: "Aggiungi / Modifica", short: "Aggiungi", icon: PlusCircle },
   { id: "contracts", label: "Affitti & Bolli", short: "Affitti", icon: FileText },
-  { id: "settings", label: "Alert & Test Invii", short: "Avvisi", icon: BellRing },
+  { id: "settings", label: "Impostazioni", short: "Impostazioni", icon: SettingsIcon },
 ];
 
 export default function App({ showLogout = true }: { showLogout?: boolean }) {
@@ -30,6 +31,8 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
   const [editing, setEditing] = useState<Deadline | null>(null);
   const [guide, setGuide] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>("avvisi");
 
   const logout = async () => {
     if (!confirm("Vuoi uscire dallo Scadenziario?")) return;
@@ -94,7 +97,9 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-4 sm:gap-3">
           <CalendarCheck className="hidden h-11 w-11 shrink-0 sm:block" aria-hidden />
           <div className="min-w-0 flex-1">
-            <h1 className="text-[1.6rem] font-extrabold leading-tight sm:text-4xl">Scadenziario Greco</h1>
+            <h1 className="text-[1.6rem] font-extrabold leading-[1.1] sm:text-4xl">
+              Scadenziario <span className="block text-yellow-300 sm:inline">Anthony Greco</span>
+            </h1>
             <p className="text-sm text-blue-200 sm:text-base">By Bruno Greco</p>
           </div>
           <button
@@ -140,7 +145,7 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
           <button
             key={t.id}
             onClick={() => goTab(t.id)}
-            className={`relative flex flex-col items-center gap-1 py-3 text-sm font-bold transition-colors active:bg-slate-100 ${tab === t.id ? "text-blue-800" : "text-slate-600"}`}
+            className={`relative flex min-w-0 flex-col items-center gap-1 whitespace-nowrap py-3 text-[13px] font-bold tracking-tight transition-colors active:bg-slate-100 ${tab === t.id ? "text-blue-800" : "text-slate-600"}`}
             aria-current={tab === t.id ? "page" : undefined}
           >
             {tab === t.id && <span className="absolute inset-x-6 top-0 h-1 rounded-b-full bg-blue-700" aria-hidden />}
@@ -169,7 +174,7 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
           <DeadlineManager data={data} reload={reload} notify={notify} editing={editing} setEditing={setEditing} />
         )}
         {data && tab === "contracts" && <Contracts data={data} reload={reload} notify={notify} />}
-        {tab === "settings" && <SettingsPanel notify={notify} />}
+        {tab === "settings" && <SettingsPanel notify={notify} section={settingsSection} onSection={setSettingsSection} />}
       </main>
 
       {/* Menu ad hamburger (telefono) */}
@@ -181,7 +186,7 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
           >
             <div className="flex items-center justify-between bg-blue-800 px-5 py-4 text-white">
               <div>
-                <p className="text-xl font-extrabold">Scadenziario Greco</p>
+                <p className="text-xl font-extrabold">Scadenziario Anthony Greco</p>
                 <p className="text-sm text-blue-200">By Bruno Greco</p>
               </div>
               <button onClick={() => setMenu(false)} className="rounded-xl bg-white/15 p-2" aria-label="Chiudi il menu">
@@ -214,6 +219,25 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
               <button
                 onClick={() => {
                   setMenu(false);
+                  setAskOpen(true);
+                }}
+                className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-xl font-bold text-indigo-800 active:bg-slate-100"
+              >
+                <MessageCircleQuestion className="h-7 w-7 shrink-0" aria-hidden /> Chiedi allo Scadenziario
+              </button>
+              <button
+                onClick={() => {
+                  setMenu(false);
+                  setSettingsSection("diario");
+                  goTab("settings");
+                }}
+                className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-xl font-bold text-slate-800 active:bg-slate-100"
+              >
+                <History className="h-7 w-7 shrink-0" aria-hidden /> Diario attività
+              </button>
+              <button
+                onClick={() => {
+                  setMenu(false);
                   setGuide(true);
                 }}
                 className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-xl font-bold text-slate-800 active:bg-slate-100"
@@ -231,8 +255,20 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
       )}
 
       {guide && <Guide onClose={() => setGuide(false)} />}
+      {askOpen && <AskChat onClose={() => setAskOpen(false)} />}
 
       <Splash />
+
+      {/* Pulsante "Chiedi" (assistente che legge tutti i dati) */}
+      {tab === "dashboard" && data && (
+        <button
+          onClick={() => setAskOpen(true)}
+          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-4 z-30 flex h-16 items-center gap-2 rounded-full bg-gradient-to-r from-indigo-700 to-blue-700 px-5 text-lg font-bold text-white shadow-xl transition active:scale-95 md:bottom-8 md:left-auto md:right-8"
+          aria-label="Chiedi allo Scadenziario"
+        >
+          <MessageCircleQuestion className="h-8 w-8" aria-hidden /> Chiedi
+        </button>
+      )}
 
       {/* Pulsante rapido "+" sul telefono */}
       {tab === "dashboard" && data && (

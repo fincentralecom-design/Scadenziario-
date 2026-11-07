@@ -1,4 +1,4 @@
-// Service worker di Scadenziario Greco: riceve le notifiche push e apre il link di conferma.
+// Service worker di Scadenziario Anthony Greco: riceve le notifiche push e apre il link di conferma.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
@@ -7,10 +7,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "Scadenziario Greco", body: event.data ? event.data.text() : "" };
+    data = { title: "Scadenziario Anthony Greco", body: event.data ? event.data.text() : "" };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "Scadenziario Greco", {
+    self.registration.showNotification(data.title || "Scadenziario Anthony Greco", {
       body: data.body || "",
       icon: "/icon-192.png",
       badge: "/icon-192.png",

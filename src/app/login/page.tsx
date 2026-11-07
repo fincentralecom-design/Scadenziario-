@@ -9,6 +9,30 @@ export default function LoginPage() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [forgot, setForgot] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState<string | null>(null);
+
+  const sendReset = async () => {
+    if (!user.trim()) {
+      setError("Scrivi prima il nome utente.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/password/forgot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string; noEmail?: boolean };
+      setForgotMsg(data.noEmail ? "Non è impostata nessuna email di recupero. Chiedi a Bruno di reimpostare la password." : data.message || "Richiesta inviata.");
+    } catch {
+      setError("Connessione non riuscita. Riprova.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +61,9 @@ export default function LoginPage() {
         <div className="mb-6 flex items-center gap-3">
           <CalendarCheck className="h-12 w-12 shrink-0 text-blue-800" aria-hidden />
           <div>
-            <h1 className="text-3xl font-extrabold leading-tight text-slate-900">Scadenziario Greco</h1>
+            <h1 className="text-3xl font-extrabold leading-tight text-slate-900">
+              Scadenziario <span className="block text-blue-700">Anthony Greco</span>
+            </h1>
             <p className="text-base text-slate-500">By Bruno Greco</p>
           </div>
         </div>
@@ -63,6 +89,22 @@ export default function LoginPage() {
           <LogIn className="h-6 w-6" aria-hidden /> {busy ? "Accesso in corso…" : "ENTRA"}
         </button>
         <p className="mt-4 text-center text-base text-slate-500">L&apos;accesso resta attivo per 30 giorni su questo dispositivo.</p>
+        <div className="mt-4 border-t border-slate-200 pt-4 text-center">
+          {!forgot ? (
+            <button type="button" className="text-lg font-semibold text-blue-700 underline" onClick={() => setForgot(true)}>
+              Password dimenticata?
+            </button>
+          ) : forgotMsg ? (
+            <p className="rounded-xl bg-blue-50 p-3 text-lg text-blue-950">{forgotMsg}</p>
+          ) : (
+            <div className="space-y-2 text-left">
+              <p className="text-base text-slate-700">Scrivi il nome utente qui sopra e premi il pulsante: ti mandiamo per email un link per scegliere una nuova password.</p>
+              <button type="button" className="btn-ghost w-full" onClick={() => void sendReset()} disabled={busy}>
+                Invia link di recupero
+              </button>
+            </div>
+          )}
+        </div>
       </form>
     </main>
   );

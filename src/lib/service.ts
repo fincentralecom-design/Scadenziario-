@@ -131,6 +131,20 @@ export async function runDailyCheck(opts: { today?: string; dryRun?: boolean } =
   }
 
   if (!opts.dryRun) {
+    const sentNow = out.filter((a) => a.results.some((r) => r.ok));
+    if (sentNow.length) {
+      const { logAudit } = await import("./audit");
+      for (const a of sentNow) {
+        await logAudit({
+          action: "avviso",
+          actor: "Sistema",
+          via: "sistema",
+          target: a.subject.replace(/^[^:]+:\s*/, ""),
+          targetId: a.deadlineId,
+          summary: `${a.subject.split(":")[0]} inviato via ${a.results.filter((r) => r.ok).map((r) => r.channel).join(", ")}`,
+        });
+      }
+    }
     await store.setKV(SENT_KEY, [...sent].slice(-2000));
     const runs = (await store.getKV<unknown[]>(RUNS_KEY)) ?? [];
     runs.unshift({ at: new Date().toISOString(), today, alerts: out.length, sent: out.filter((a) => a.results.some((r) => r.ok)).length });

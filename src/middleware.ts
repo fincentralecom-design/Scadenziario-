@@ -6,6 +6,9 @@ const PUBLIC = [
   "/login",
   "/api/login",
   "/api/logout",
+  "/reset-password",
+  "/api/password/forgot",
+  "/api/password/reset",
   "/conferma/", // protetta dal token firmato nel link
   "/api/cron/", // protetta da CRON_SECRET
   "/api/calendar/feed", // protetta dal token nel link

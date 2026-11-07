@@ -102,7 +102,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
     title: "🔔 Avvisi: chi li riceve e come provarli",
     body: (
       <>
-        <p>Nella scheda <b>Avvisi</b> scrivi nome, email, numero WhatsApp e numero SMS (il +39 si aggiunge da solo), scegli i canali e premi <b>Salva</b>.</p>
+        <p>In <b>Impostazioni → Avvisi</b> scrivi nome, email, numero WhatsApp e numero SMS (il +39 si aggiunge da solo), scegli i canali e premi <b>Salva</b>.</p>
         <p>Sotto ogni canale vedi se il servizio di invio è <b className="text-green-700">collegato</b>. Se è giallo, manca la configurazione su Netlify (vedi sotto).</p>
         <p>Per provare: scegli una data in “Simula come se oggi fosse” (es. 3 giorni prima di una scadenza), premi <b>Simula Controllo Giornaliero</b> e poi <b>Invia subito questi messaggi di prova</b>. Arrivano con la scritta [TEST].</p>
         <p>Opzione <b>sollecito giornaliero</b>: se una scadenza passa senza conferma, ricevi un promemoria ogni giorno.</p>
@@ -116,6 +116,15 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
         <p>Sul telefono il menu completo si apre col pulsante <b>☰ Menu</b> in alto a destra; in basso ci sono le 4 schede e il pulsante blu <b>+</b> per aggiungere al volo.</p>
         <p>Ogni avviso contiene un link personale. Aprendolo compare un grande pulsante <b>✅ HO FATTO</b>: premilo e la scadenza viene chiusa e registrata nello storico.</p>
         <p>Il link funziona <b>senza password</b>, vale solo per quella scadenza e smette di funzionare dopo l&apos;uso. Se hai sbagliato, nelle 24 ore successive puoi premere “annulla la conferma”.</p>
+      </>
+    ),
+  },
+  {
+    title: "💬 Chiedi allo Scadenziario",
+    body: (
+      <>
+        <p>Sul Cruscotto, in basso a sinistra, c&apos;è il pulsante <b>Chiedi</b>. Apre una chat che legge <b>tutti i dati</b>: scadenze, pagamenti fatti, contratti e diario.</p>
+        <p>Esempi: “Cosa scade questa settimana?”, “Quanto devo pagare a dicembre?”, “Quando ho pagato l&apos;ultima volta l&apos;IMU?”, “Chi ha modificato le scadenze ieri?”. Puoi anche parlare col microfono.</p>
       </>
     ),
   },
@@ -151,11 +160,11 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
         <ol>
           <li>Apri il sito con <b>Safari</b>, tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b>.</li>
           <li>Apri lo Scadenziario dall&apos;icona sulla Home ed entra.</li>
-          <li>Vai in <b>Avvisi</b> → <b>Attiva notifiche su questo telefono</b> → <b>Consenti</b>.</li>
+          <li>Vai in <b>Impostazioni → Telefono e Calendario</b> → <b>Attiva notifiche su questo telefono</b> → <b>Consenti</b>.</li>
           <li>Premi <b>Invia notifica di prova</b> per controllare.</li>
         </ol>
         <p>Serve iOS 16.4 o successivo. Puoi attivarle su più telefoni.</p>
-        <p><b>Calendario dell&apos;iPhone</b>: in <b>Avvisi</b> premi <b>Abbonati nel Calendario iPhone</b>. Le scadenze compaiono nel Calendario con promemoria 3 giorni prima e il giorno stesso alle 8:30, e si aggiornano da sole. Nella schermata di aggiunta disattiva “Rimuovi avvisi”. Su ogni scheda c&apos;è anche “Aggiungi al Calendario” per una singola scadenza.</p>
+        <p><b>Calendario dell&apos;iPhone</b>: in <b>Impostazioni → Telefono e Calendario</b> premi <b>Abbonati nel Calendario iPhone</b>. Le scadenze compaiono nel Calendario con promemoria 3 giorni prima e il giorno stesso alle 8:30, e si aggiornano da sole. Nella schermata di aggiunta disattiva “Rimuovi avvisi”. Su ogni scheda c&apos;è anche “Aggiungi al Calendario” per una singola scadenza.</p>
       </>
     ),
   },
@@ -194,11 +203,20 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
     ),
   },
   {
+    title: "📖 Diario attività e backup",
+    body: (
+      <>
+        <p>In <b>Impostazioni → Diario attività</b> trovi tutto quello che è stato fatto: chi, quando e cosa è cambiato (prima → dopo). Per sapere chi ha fatto cosa, in <b>Impostazioni → Account</b> scrivi su ogni telefono il nome di chi lo usa (es. “Anthony”).</p>
+        <p>I dati sono salvati sul server: aggiornare l&apos;app non cancella nulla. In <b>Impostazioni → Dati e backup</b> puoi scaricare una copia di sicurezza e ripristinarla.</p>
+      </>
+    ),
+  },
+  {
     title: "🔐 Accesso e sicurezza",
     body: (
       <>
         <p>L&apos;app si apre solo con <b>nome utente e password</b>. L&apos;accesso resta attivo 30 giorni sul dispositivo; per uscire premi <b>Esci</b> in alto.</p>
-        <p>Per cambiare la password imposta <code>APP_PASSWORD</code> su Netlify e rifai il deploy. Non scrivere mai password o chiavi API in messaggi o email.</p>
+        <p>Per cambiare la password: <b>Impostazioni → Account e password → Cambia password</b>. Se la dimentichi, nella pagina di accesso tocca <b>“Password dimenticata?”</b>: arriva un link all&apos;email di recupero. Non scrivere mai password o chiavi API in messaggi o email.</p>
       </>
     ),
   },

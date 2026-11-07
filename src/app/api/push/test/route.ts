@@ -9,7 +9,7 @@ export async function POST() {
   try {
     const s = await getSettings();
     const result = await sendPushToAll({
-      title: "🔔 Prova notifica – Scadenziario Greco",
+      title: "🔔 Prova notifica – Scadenziario Anthony Greco",
       body: "Le notifiche funzionano! Riceverai qui gli avvisi 3 giorni prima e il giorno della scadenza.",
       url: `${baseUrl(s.appUrl)}/`,
       tag: "test",

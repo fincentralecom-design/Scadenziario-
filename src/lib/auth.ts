@@ -43,6 +43,7 @@ function signingKey(): string {
     process.env.SESSION_SECRET ||
     process.env.CRON_SECRET ||
     process.env.MAGIC_LINK_SECRET ||
+    process.env.BUILD_SECRET ||
     `fallback:${configuredUser()}:${process.env.APP_PASSWORD || DEFAULT_PASSWORD_SHA256}`
   );
 }

@@ -23,7 +23,7 @@ const ReplySchema = z.object({
   deadlines: z.array(DraftSchema),
 });
 
-const SYSTEM = `Sei l'assistente dello "Scadenziario Greco", un'app per un affittacamere con Partita IVA in Italia che gestisce scadenze fiscali, turistiche, di affitti e di manutenzione. L'utente è spesso una persona anziana: scrive o detta a voce frasi brevi e informali, a volte con errori di dettatura.
+const SYSTEM = `Sei l'assistente dello "Scadenziario Anthony Greco", un'app per un affittacamere con Partita IVA in Italia che gestisce scadenze fiscali, turistiche, di affitti e di manutenzione. L'utente è spesso una persona anziana: scrive o detta a voce frasi brevi e informali, a volte con errori di dettatura.
 
 Il tuo compito è trasformare ciò che dice in scadenze da salvare.
 - Calcola sempre la prima data futura (uguale o successiva a oggi) in formato YYYY-MM-DD. "Il 16 di ogni mese" diventa la prossima data del 16 con ricorrenza mensile.
@@ -36,6 +36,16 @@ Il tuo compito è trasformare ciò che dice in scadenze da salvare.
 export interface ChatTurn {
   role: "user" | "assistant";
   content: string;
+}
+
+/** Modello AI: Claude Haiku 5.5 (il più economico), modificabile con la variabile AI_MODEL (es. claude-opus-5-5, più capace). */
+export function aiModel(): string {
+  return process.env.AI_MODEL?.trim() || "claude-haiku-5-5";
+}
+
+/** Il fallback lato server sui rifiuti è disponibile solo su alcuni modelli. */
+export function fallbackParams(): { betas?: string[]; fallbacks?: "default" } {
+  return /^claude-(opus-5|opus-5-5|fable-5-1|sonnet-5-5)$/.test(aiModel()) ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" } : {};
 }
 
 export function aiConfigured(): boolean {
@@ -53,11 +63,10 @@ export async function runAssistant(turns: ChatTurn[], today: string): Promise<{ 
 
   try {
     const response = await client.beta.messages.parse({
-      model: "claude-opus-5-5",
+      model: aiModel(),
       max_tokens: 16000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "medium", format: betaZodOutputFormat(ReplySchema) },
+      ...fallbackParams(),
+      output_config: { effort: "low", format: betaZodOutputFormat(ReplySchema) },
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       messages,
     });

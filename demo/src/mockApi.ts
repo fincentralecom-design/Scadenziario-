@@ -7,14 +7,38 @@ import { normalizeContract, planContractSync, sanitizeDeadline } from "@/lib/dom
 import { buildSeed } from "@/lib/seed";
 import { buildIcs } from "@/lib/ics";
 import { quickParse } from "@/lib/quickParse";
+import { localAnswer } from "@/lib/localAnswer";
 import { DEFAULT_SETTINGS, type Contract, type Deadline, type Settings } from "@/lib/types";
 
 const KEY = "scadenziario-pro-demo-v1";
+
+interface DemoAudit {
+  id: string;
+  at: string;
+  action: string;
+  actor: string;
+  via: "app";
+  device: string;
+  target: string;
+  summary: string;
+}
 
 interface DemoDB {
   deadlines: Record<string, Deadline>;
   contracts: Record<string, Contract>;
   settings: Settings;
+  audit?: DemoAudit[];
+}
+
+function audit(action: string, target: string, summary: string) {
+  const db = load();
+  let actor = "";
+  try {
+    actor = localStorage.getItem("sg-device-name") || "";
+  } catch {
+    /* ignora */
+  }
+  db.audit = [{ id: `a${Date.now()}${Math.random().toString(36).slice(2, 5)}`, at: new Date().toISOString(), action, actor: actor || "Utente (questo browser)", via: "app" as const, device: "Browser", target, summary }, ...(db.audit ?? [])].slice(0, 1000);
 }
 
 let memory: DemoDB | null = null;
@@ -103,20 +127,29 @@ async function handle(url: string, method: string, body?: unknown): Promise<unkn
     if (!id && method === "POST") {
       const d = sanitizeDeadline({ ...(body as Partial<Deadline>), id: undefined });
       db.deadlines[d.id] = d;
+      audit("creata", d.title, `Nuova scadenza per il ${d.dueDate.split("-").reverse().join("/")}`);
       save();
       return d;
     }
     const existing = db.deadlines[id];
     if (!existing) throw new Error("Scadenza non trovata");
-    if (action === "complete") return completeLocal(id, { ...(body as CompletionInput), via: "app" });
-    if (action === "undo") return undoLocal(id);
+    if (action === "complete") {
+      audit("completata", existing.title, "Segnata come fatta");
+      return completeLocal(id, { ...(body as CompletionInput), via: "app" });
+    }
+    if (action === "undo") {
+      audit("annullata", existing.title, "Annullato l'ultimo completamento");
+      return undoLocal(id);
+    }
     if (method === "PUT") {
       const d = sanitizeDeadline(body as Partial<Deadline>, existing);
       db.deadlines[id] = d;
+      audit(d.active !== existing.active ? (d.active ? "riattivata" : "disattivata") : "modificata", d.title, "Scadenza modificata");
       save();
       return d;
     }
     if (method === "DELETE") {
+      audit("eliminata", existing.title, "Scadenza eliminata");
       delete db.deadlines[id];
       save();
       return { ok: true };
@@ -179,6 +212,29 @@ async function handle(url: string, method: string, body?: unknown): Promise<unkn
   }
 
   if (res === "push") return { publicKey: null, devices: 0 };
+
+  if (res === "audit") return db.audit ?? [];
+
+  if (res === "ask") {
+    const turns = ((body as { messages?: { role: string; content: string }[] })?.messages ?? []).filter((t) => t.role === "user");
+    return { answer: localAnswer(turns[turns.length - 1]?.content ?? "", Object.values(db.deadlines), todayRome()), mode: "base" };
+  }
+
+  if (res === "password") throw new Error("Disponibile solo nell'app pubblicata online.");
+
+  if (res === "backup") {
+    if (method === "POST") {
+      const b = body as { app?: string; deadlines?: Deadline[]; contracts?: Contract[]; settings?: Settings };
+      if (b.app !== "scadenziario-greco" || !Array.isArray(b.deadlines)) throw new Error("Il file non è una copia valida.");
+      db.deadlines = Object.fromEntries(b.deadlines.map((d) => [d.id, d]));
+      db.contracts = Object.fromEntries((b.contracts ?? []).map((c) => [c.id, c]));
+      if (b.settings) db.settings = b.settings;
+      audit("backup", "Dati", "Ripristinata una copia di sicurezza");
+      save();
+      return { ok: true, deadlines: b.deadlines.length, contracts: (b.contracts ?? []).length };
+    }
+    return { app: "scadenziario-greco", version: 1, exportedAt: new Date().toISOString(), deadlines: Object.values(db.deadlines), contracts: Object.values(db.contracts), settings: db.settings, audit: db.audit ?? [] };
+  }
 
   if (res === "assistant") {
     const turns = ((body as { messages?: { role: string; content: string }[] })?.messages ?? []).filter((t) => t.role === "user");
