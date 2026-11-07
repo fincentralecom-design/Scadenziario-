@@ -1,0 +1,15 @@
+# Configurazione Netlify per Scadenziario Pro (Next.js con funzioni server).
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Adattatore ufficiale Next.js per Netlify (API, pagine dinamiche, middleware).
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "netlify/functions"
