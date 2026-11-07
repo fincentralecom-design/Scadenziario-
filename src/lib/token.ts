@@ -21,6 +21,7 @@ export function baseUrl(settingsUrl?: string): string {
   const url =
     settingsUrl ||
     process.env.APP_URL ||
+    process.env.URL || // Netlify: indirizzo principale del sito
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "") ||
     "http://localhost:3000";
   return url.replace(/\/+$/, "");

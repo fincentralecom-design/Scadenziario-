@@ -3,7 +3,7 @@ import path from "node:path";
 import type { Contract, Deadline } from "../types";
 import type { Store } from "./types";
 
-interface DB {
+export interface DB {
   deadlines: Record<string, Deadline>;
   contracts: Record<string, Contract>;
   kv: Record<string, unknown>;
@@ -11,12 +11,12 @@ interface DB {
 
 /** Archivio su file JSON: ideale in locale, su un server/VPS o in Docker con volume. */
 export class JsonStore implements Store {
-  kind = "json" as const;
+  kind: Store["kind"] = "json";
   private queue: Promise<unknown> = Promise.resolve();
 
-  constructor(private file: string, public persistent = true) {}
+  constructor(protected file: string, public persistent = true) {}
 
-  private async read(): Promise<DB> {
+  protected async read(): Promise<DB> {
     try {
       const raw = await fs.readFile(this.file, "utf8");
       const db = JSON.parse(raw) as Partial<DB>;
@@ -27,7 +27,7 @@ export class JsonStore implements Store {
     }
   }
 
-  private async write(db: DB): Promise<void> {
+  protected async write(db: DB): Promise<void> {
     await fs.mkdir(path.dirname(this.file), { recursive: true });
     const tmp = `${this.file}.${process.pid}.tmp`;
     await fs.writeFile(tmp, JSON.stringify(db, null, 2), "utf8");

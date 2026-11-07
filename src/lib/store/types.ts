@@ -2,7 +2,7 @@ import type { Contract, Deadline, Settings } from "../types";
 
 /** Interfaccia unica di persistenza: file JSON locale oppure Supabase. */
 export interface Store {
-  kind: "json" | "supabase";
+  kind: "json" | "supabase" | "netlify-blobs";
   /** false se i dati possono andare persi al riavvio (es. /tmp su Vercel). */
   persistent: boolean;
   listDeadlines(): Promise<Deadline[]>;

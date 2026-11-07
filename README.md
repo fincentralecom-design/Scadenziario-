@@ -31,6 +31,36 @@ npm test                     # test della logica (date, ricorrenze, contratti, a
 
 Senza configurazione i dati vengono salvati in `data/db.json`.
 
+## Messa online su Netlify (consigliato, nessun database da configurare)
+
+Il progetto è già pronto per Netlify (`netlify.toml`):
+- Next.js gira con l'adattatore ufficiale `@netlify/plugin-nextjs` (API, pagine dinamiche, protezione con password);
+- i dati vengono salvati in **Netlify Blobs**, persistenti e gratuiti (Supabase resta opzionale);
+- la funzione programmata `netlify/functions/check-deadlines.mts` lancia il controllo ogni mattina alle 08:30 italiane.
+
+> ⚠️ Il caricamento “trascina la cartella” (Netlify Drop) **non funziona** per questa app, perché serve
+> la parte server. Usa uno dei due metodi qui sotto.
+
+**Metodo A – da GitHub (aggiornamenti automatici):** Netlify → *Add new site* → *Import an existing project*
+→ scegli il repository. Build command e cartella vengono letti da `netlify.toml`.
+
+**Metodo B – da computer con lo zip:**
+```bash
+unzip scadenziario-pro-netlify.zip && cd scadenziario-pro
+npm install
+npx netlify-cli login
+npx netlify-cli deploy --build --prod   # la prima volta chiede di creare/collegare il sito
+```
+
+**Variabili d'ambiente** (Netlify → *Site configuration* → *Environment variables*, ambito “Functions”):
+`CRON_SECRET` (obbligatoria), `APP_PASSWORD` (consigliata), e le chiavi dei provider
+(`RESEND_API_KEY`, `EMAIL_FROM`, `TWILIO_*` o `BREVO_*`). Dopo averle aggiunte rifai il deploy.
+Il link pubblico usato nei messaggi è preso in automatico dall'indirizzo del sito (variabile `URL`),
+oppure da `APP_URL` / dal campo nelle Impostazioni se usi un dominio personalizzato.
+
+Verifica: nella scheda *Alert & Test Invii* usa “Simula Controllo Giornaliero”; su Netlify → *Logs* →
+*Functions* → `check-deadlines` vedi l'esito delle esecuzioni mattutine.
+
 ## Messa online (Vercel + Supabase)
 
 1. Crea un progetto **Supabase** ed esegui `supabase/schema.sql` nel SQL Editor.
