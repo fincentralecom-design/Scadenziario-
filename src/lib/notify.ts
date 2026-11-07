@@ -46,7 +46,7 @@ async function readError(res: Response): Promise<string> {
 }
 
 async function sendEmail(to: string, msg: AlertMessage): Promise<SendResult> {
-  const from = env("EMAIL_FROM") || "Scadenziario Pro <onboarding@resend.dev>";
+  const from = env("EMAIL_FROM") || "Scadenziario Greco <onboarding@resend.dev>";
   if (env("RESEND_API_KEY")) {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

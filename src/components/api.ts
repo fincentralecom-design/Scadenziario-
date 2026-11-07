@@ -28,6 +28,10 @@ export async function api<T>(url: string, method = "GET", body?: unknown): Promi
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
+  if (res.status === 401 && !url.startsWith("/api/login")) {
+    location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
+    throw new Error("Accesso scaduto");
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || `Errore ${res.status}`);
   return data as T;

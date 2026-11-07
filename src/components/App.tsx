@@ -1,11 +1,12 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { BellRing, CalendarCheck, FileText, PlusCircle, TriangleAlert } from "lucide-react";
+import { BellRing, BookOpen, CalendarCheck, FileText, LogOut, PlusCircle, TriangleAlert } from "lucide-react";
 import { api, type AppData } from "./api";
 import Dashboard from "./Dashboard";
 import DeadlineManager from "./DeadlineManager";
 import Contracts from "./Contracts";
 import SettingsPanel from "./SettingsPanel";
+import Guide from "./Guide";
 import type { Deadline } from "@/lib/types";
 
 type Tab = "dashboard" | "edit" | "contracts" | "settings";
@@ -17,12 +18,19 @@ const TABS: { id: Tab; label: string; short: string; icon: typeof CalendarCheck 
   { id: "settings", label: "Alert & Test Invii", short: "Avvisi", icon: BellRing },
 ];
 
-export default function App() {
+export default function App({ showLogout = true }: { showLogout?: boolean }) {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [data, setData] = useState<AppData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [editing, setEditing] = useState<Deadline | null>(null);
+  const [guide, setGuide] = useState(false);
+
+  const logout = async () => {
+    if (!confirm("Vuoi uscire dallo Scadenziario?")) return;
+    await fetch("/api/logout", { method: "POST" }).catch(() => undefined);
+    location.href = "/login";
+  };
 
   const reload = useCallback(async () => {
     try {
@@ -54,12 +62,26 @@ export default function App() {
   return (
     <div className="min-h-screen pb-28 md:pb-10">
       <header className="bg-blue-800 text-white">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-4">
-          <CalendarCheck className="h-9 w-9 shrink-0" aria-hidden />
-          <div className="min-w-0">
-            <h1 className="text-xl font-extrabold leading-tight sm:text-2xl">Scadenziario Pro</h1>
-            <p className="truncate text-sm text-blue-100 sm:text-base">Affittacamere, P.IVA &amp; Locazioni</p>
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-4 sm:gap-3">
+          <CalendarCheck className="hidden h-11 w-11 shrink-0 sm:block" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[1.6rem] font-extrabold leading-tight sm:text-4xl">Scadenziario Greco</h1>
+            <p className="text-sm text-blue-200 sm:text-base">By Bruno Greco</p>
           </div>
+          <button
+            onClick={() => setGuide(true)}
+            className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl bg-white px-3 py-1.5 text-sm font-bold text-blue-900 shadow hover:bg-blue-50 sm:flex-row sm:gap-2 sm:px-4 sm:py-2 sm:text-lg"
+          >
+            <BookOpen className="h-6 w-6" aria-hidden /> Guida
+          </button>
+          {showLogout && (
+            <button
+              onClick={() => void logout()}
+              className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl border-2 border-white/40 px-2.5 py-1 text-sm font-bold text-white hover:bg-blue-700 sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-lg"
+            >
+              <LogOut className="h-6 w-6" aria-hidden /> Esci
+            </button>
+          )}
         </div>
         <nav className="mx-auto hidden max-w-6xl gap-2 px-4 md:flex" aria-label="Sezioni">
           {TABS.map((t) => (
@@ -111,6 +133,8 @@ export default function App() {
         {data && tab === "contracts" && <Contracts data={data} reload={reload} notify={notify} />}
         {tab === "settings" && <SettingsPanel notify={notify} />}
       </main>
+
+      {guide && <Guide onClose={() => setGuide(false)} />}
 
       {toast && (
         <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-2xl bg-slate-900 px-5 py-4 text-center text-lg font-semibold text-white shadow-2xl md:bottom-8">

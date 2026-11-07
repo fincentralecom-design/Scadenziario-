@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Scadenziario Pro",
-  description: "Scadenziario Pro - Affittacamere, P.IVA & Locazioni: scadenze fiscali, turistiche e contrattuali con avvisi automatici.",
+  title: "Scadenziario Greco",
+  description: "Scadenziario Greco by Bruno Greco - Affittacamere, P.IVA & Locazioni: scadenze fiscali, turistiche e contrattuali con avvisi automatici.",
   icons: { icon: "/icon.svg" },
   manifest: "/manifest.webmanifest",
 };

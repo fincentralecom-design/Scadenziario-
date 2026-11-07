@@ -1,26 +1,33 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { SESSION_COOKIE, authDisabled, verifySession } from "@/lib/auth";
+
+/** Percorsi accessibili senza login. */
+const PUBLIC = [
+  "/login",
+  "/api/login",
+  "/api/logout",
+  "/conferma/", // protetta dal token firmato nel link
+  "/api/cron/", // protetta da CRON_SECRET
+];
 
 /**
- * Protezione opzionale dell'app con password (Basic Auth) se APP_PASSWORD è impostata.
- * Restano pubblici: la pagina di conferma dei magic link (protetta dal token firmato)
- * e l'endpoint del cron (protetto da CRON_SECRET).
+ * Accesso all'app solo dopo il login (utente e password).
+ * Restano pubblici la pagina di login, i Magic Link di conferma e il cron.
  */
-export function middleware(req: NextRequest) {
-  const password = process.env.APP_PASSWORD;
-  if (!password) return NextResponse.next();
-  const { pathname } = req.nextUrl;
-  if (pathname.startsWith("/conferma/") || pathname.startsWith("/api/cron/")) return NextResponse.next();
+export async function middleware(req: NextRequest) {
+  if (authDisabled()) return NextResponse.next();
+  const { pathname, search } = req.nextUrl;
+  if (PUBLIC.some((p) => pathname === p || (p.endsWith("/") && pathname.startsWith(p)))) return NextResponse.next();
 
-  const header = req.headers.get("authorization") || "";
-  if (header.startsWith("Basic ")) {
-    const decoded = atob(header.slice(6));
-    const pass = decoded.slice(decoded.indexOf(":") + 1);
-    if (pass === password) return NextResponse.next();
+  if (await verifySession(req.cookies.get(SESSION_COOKIE)?.value)) return NextResponse.next();
+
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Accesso scaduto: ricarica la pagina ed entra di nuovo." }, { status: 401 });
   }
-  return new NextResponse("Accesso riservato", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Scadenziario Pro", charset="UTF-8"' },
-  });
+  const url = req.nextUrl.clone();
+  url.pathname = "/login";
+  url.search = pathname !== "/" ? `?next=${encodeURIComponent(pathname + search)}` : "";
+  return NextResponse.redirect(url);
 }
 
 export const config = {

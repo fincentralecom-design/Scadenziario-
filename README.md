@@ -1,8 +1,17 @@
-# Scadenziario Pro – Affittacamere, P.IVA & Locazioni
+# Scadenziario Greco – Affittacamere, P.IVA & Locazioni
+
+_By Bruno Greco_
 
 Web app (Next.js + Tailwind) per gestire scadenze fiscali, turistiche, contrattuali e di sicurezza,
 con **avvisi automatici via Email, WhatsApp e SMS** 3 giorni prima e il giorno stesso, e conferma
 "HO FATTO" con un tocco direttamente dal messaggio (Magic Link, senza login).
+
+## Accesso
+
+L'app si apre dalla pagina **/login** con nome utente e password (sessione di 30 giorni, pulsante “Esci” in alto).
+Credenziali iniziali: utente `greco`, password `greco2026`. Per cambiarle imposta `APP_USERNAME` e `APP_PASSWORD`
+nelle variabili d'ambiente di Netlify e rifai il deploy. Restano accessibili senza login solo i link di conferma
+(firmati) e l'endpoint del cron (protetto da `CRON_SECRET`). Il pulsante **Guida** in alto spiega tutte le funzioni.
 
 ## Funzioni principali
 
@@ -62,7 +71,7 @@ npx netlify-cli deploy --build --prod   # la prima volta chiede di creare/colleg
 ```
 
 **Variabili d'ambiente** (Netlify → *Site configuration* → *Environment variables*, ambito “Functions”):
-`CRON_SECRET` (obbligatoria), `APP_PASSWORD` (consigliata), e le chiavi dei provider
+`CRON_SECRET` (obbligatoria), `APP_PASSWORD` (per cambiare la password di accesso), e le chiavi dei provider
 (`RESEND_API_KEY`, `EMAIL_FROM`, `TWILIO_*` o `BREVO_*`). Dopo averle aggiunte rifai il deploy.
 Il link pubblico usato nei messaggi è preso in automatico dall'indirizzo del sito (variabile `URL`),
 oppure da `APP_URL` / dal campo nelle Impostazioni se usi un dominio personalizzato.
@@ -74,7 +83,7 @@ Verifica: nella scheda *Alert & Test Invii* usa “Simula Controllo Giornaliero�
 
 1. Crea un progetto **Supabase** ed esegui `supabase/schema.sql` nel SQL Editor.
 2. Importa il repository su **Vercel** e imposta le variabili d’ambiente (vedi `.env.example`):
-   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `APP_PASSWORD` (consigliata),
+   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `APP_PASSWORD` (per cambiare la password),
    più i provider di invio.
 3. `vercel.json` programma `/api/cron/check-deadlines` alle 06:30 e 07:30 UTC: in ora solare e legale
    una delle due cade alle **08:30 italiane**; prima delle 8 l’endpoint non fa nulla e ogni avviso

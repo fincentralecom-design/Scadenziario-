@@ -25,7 +25,7 @@ function Conferma({ id, due }: { id: string; due: string }) {
   const back = () => (location.hash = "");
   const shell = (body: React.ReactNode) => (
     <main className="mx-auto max-w-xl px-4 py-8">
-      <p className="mb-6 text-center text-lg font-bold text-blue-800">📅 Scadenziario Pro</p>
+      <p className="mb-6 text-center text-lg font-bold text-blue-800">📅 Scadenziario Greco</p>
       {body}
       <button className="btn-ghost mt-6 w-full" onClick={back}>Torna all&apos;app</button>
     </main>
@@ -97,7 +97,7 @@ function Root() {
           Ricomincia da zero
         </button>
       </div>
-      <App />
+      <App showLogout={false} />
     </>
   );
 }

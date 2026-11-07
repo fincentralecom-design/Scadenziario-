@@ -6,7 +6,7 @@ import { getStore } from "@/lib/store";
 import { verifyDeadlineToken } from "@/lib/token";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Conferma scadenza – Scadenziario Pro", robots: { index: false } };
+export const metadata = { title: "Conferma scadenza – Scadenziario Greco", robots: { index: false } };
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ t?: string; ok?: string; undone?: string }> };
 
@@ -115,7 +115,7 @@ export default async function ConfermaPage({ params, searchParams }: Props) {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-xl px-4 py-8">
-      <p className="mb-6 text-center text-lg font-bold text-blue-800">📅 Scadenziario Pro</p>
+      <p className="mb-6 text-center text-lg font-bold text-blue-800">📅 Scadenziario Greco</p>
       {children}
     </main>
   );
