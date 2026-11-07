@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  /* Caratteri più grandi per una lettura comoda */
+  font-size: 18px;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (min-width: 768px) {
+  html { font-size: 19px; }
+}
+
+body {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Focus ben visibile per la navigazione da tastiera */
+:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-lg font-bold transition active:scale-[0.98] disabled:opacity-50;
+}
+
+@layer components {
+  .field {
+    @apply w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-lg text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-base font-semibold text-slate-800;
+  }
+  .btn-green { @apply btn bg-green-700 text-white hover:bg-green-800; }
+  .btn-blue { @apply btn bg-blue-700 text-white hover:bg-blue-800; }
+  .btn-ghost { @apply btn border-2 border-slate-300 bg-white text-slate-800 hover:bg-slate-50; }
+  .btn-red { @apply btn border-2 border-red-300 bg-white text-red-700 hover:bg-red-50; }
+}

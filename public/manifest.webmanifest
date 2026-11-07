@@ -1,0 +1,10 @@
+{
+  "name": "Scadenziario Pro",
+  "short_name": "Scadenze",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1d4ed8",
+  "lang": "it",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
