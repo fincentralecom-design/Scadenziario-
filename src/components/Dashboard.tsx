@@ -4,7 +4,7 @@ import { CircleCheckBig, Search, Undo2 } from "lucide-react";
 import { formatShort } from "@/lib/dates";
 import { bucketOf, formatEuro, sortByDate, type Bucket } from "@/lib/deadlines";
 import { CATEGORY_LABELS, type Category, type Deadline } from "@/lib/types";
-import { api, type AppData } from "./api";
+import { api, receiptUrl, type AppData } from "./api";
 import CompleteDialog from "./CompleteDialog";
 import DeadlineCard from "./DeadlineCard";
 
@@ -185,7 +185,7 @@ export default function Dashboard({ data, reload, notify, onEdit }: Props) {
                   </div>
                   <div className="flex gap-2">
                     {h.hasReceipt && (
-                      <a className="btn-ghost !py-2 text-base" href={`/api/receipts/${encodeURIComponent(d.id)}/${h.id}`} target="_blank" rel="noreferrer">
+                      <a className="btn-ghost !py-2 text-base" href={receiptUrl(d.id, h.id)} target="_blank" rel="noreferrer">
                         Ricevuta
                       </a>
                     )}

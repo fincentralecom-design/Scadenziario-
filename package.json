@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:demo": "node scripts/build-demo.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.8",

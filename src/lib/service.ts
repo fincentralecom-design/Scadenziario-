@@ -1,14 +1,16 @@
 // Operazioni lato server condivise da API, cron e pagina di conferma.
 import "server-only";
 import { collectAlerts, buildAlert, type AlertMessage } from "./alerts";
-import { mergeContractDeadlines, generateContractDeadlines } from "./contracts";
+import { normalizeContract, planContractSync, sanitizeDeadline } from "./domain";
 import { todayRome } from "./dates";
-import { completeDeadline, effectiveDate, newId, undoLastCompletion, type CompletionInput } from "./deadlines";
+import { completeDeadline, effectiveDate, undoLastCompletion, type CompletionInput } from "./deadlines";
 import { sendAlert, type SendResult } from "./notify";
 import { buildSeed } from "./seed";
 import { getStore } from "./store";
 import { magicLink } from "./token";
 import { DEFAULT_SETTINGS, type Contract, type Deadline, type Settings } from "./types";
+
+export { sanitizeDeadline };
 
 const SEEDED_KEY = "seeded_v1";
 const SETTINGS_KEY = "settings";
@@ -39,46 +41,6 @@ export async function saveSettings(s: Partial<Settings>): Promise<Settings> {
   return merged;
 }
 
-const CLEARABLE = ["f24Code", "portal", "description", "notes", "specialRule", "calculator", "endDate"] as const;
-
-export function sanitizeDeadline(raw: Partial<Deadline>, existing?: Deadline): Deadline {
-  const now = new Date().toISOString();
-  const input: Partial<Deadline> = { ...raw };
-  const base: Partial<Deadline> = existing ? { ...existing } : {};
-  // null = campo svuotato dall'utente: va rimosso.
-  for (const k of CLEARABLE) {
-    if ((input as Record<string, unknown>)[k] === null) {
-      delete input[k];
-      delete base[k];
-    }
-  }
-  // Se l'utente scrive un codice tributo diverso, prevale su quello calcolato in automatico.
-  if (existing?.f24Auto && "f24Code" in raw && raw.f24Code !== existing.f24Code) delete base.f24Auto;
-  delete input.history;
-  delete input.status;
-  if (!input.title?.trim()) throw new Error("Il titolo è obbligatorio");
-  if (!input.dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate)) throw new Error("Data non valida");
-  const day = Number(input.dueDate.slice(8, 10));
-  const dateChanged = !existing || existing.dueDate !== input.dueDate;
-  return {
-    createdAt: now,
-    ...base,
-    ...input,
-    id: existing?.id ?? newId("s"),
-    title: input.title.trim(),
-    category: input.category ?? existing?.category ?? "altro",
-    recurrence: input.recurrence ?? existing?.recurrence ?? "una_tantum",
-    // Se l'utente cambia la data, il nuovo giorno diventa l'àncora (salvo fine mese).
-    anchorDay: dateChanged ? (existing?.anchorDay === 31 && day >= 28 ? 31 : day) : existing?.anchorDay,
-    amount: input.amount === undefined ? (existing?.amount ?? null) : input.amount,
-    shiftIfHoliday: input.shiftIfHoliday ?? existing?.shiftIfHoliday ?? true,
-    active: input.active ?? existing?.active ?? true,
-    status: dateChanged && existing ? "todo" : (existing?.status ?? "todo"),
-    history: existing?.history ?? [],
-    updatedAt: now,
-  } as Deadline;
-}
-
 export async function completeById(id: string, input: CompletionInput): Promise<Deadline | null> {
   const store = getStore();
   const d = await store.getDeadline(id);
@@ -103,35 +65,14 @@ export async function saveContract(input: Partial<Contract>): Promise<{ contract
   const store = getStore();
   const now = new Date().toISOString();
   const existing = input.id ? await store.getContract(input.id) : null;
-  if (!input.tenant?.trim() || !input.property?.trim()) throw new Error("Inquilino e immobile sono obbligatori");
-  if (!input.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) throw new Error("Data di decorrenza non valida");
-  const contract: Contract = {
-    id: existing?.id ?? newId("c"),
-    tenant: input.tenant.trim(),
-    property: input.property.trim(),
-    startDate: input.startDate,
-    annualRent: Math.max(0, Number(input.annualRent) || 0),
-    cedolare: !!input.cedolare,
-    initialYears: Math.max(1, Number(input.initialYears) || 4),
-    renewalYears: Math.max(1, Number(input.renewalYears) || 4),
-    facciate: Math.max(1, Number(input.facciate) || 4),
-    copie: Math.max(1, Number(input.copie) || 1),
-    alreadyRegistered: !!input.alreadyRegistered,
-    notes: input.notes?.trim() || undefined,
-    active: input.active ?? true,
-    createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
-  };
+  const contract = normalizeContract(input, existing);
   await store.upsertContract(contract);
 
   const all = await store.listDeadlines();
   const linked = all.filter((d) => d.contractId === contract.id);
-  const generated = mergeContractDeadlines(generateContractDeadlines(contract, todayRome()), linked);
-  const keep = new Set(generated.map((d) => d.id));
-  // Scadenze non più previste (es. passaggio a cedolare secca): si rimuovono se mai completate.
-  const stale = linked.filter((d) => !keep.has(d.id));
-  await store.deleteDeadlines(stale.filter((d) => d.history.length === 0).map((d) => d.id));
-  await store.upsertDeadlines(stale.filter((d) => d.history.length > 0).map((d) => ({ ...d, active: false })));
+  const { generated, remove, deactivate } = planContractSync(contract, linked, todayRome());
+  await store.deleteDeadlines(remove);
+  await store.upsertDeadlines(deactivate);
   await store.upsertDeadlines(generated);
   return { contract, deadlines: generated };
 }

@@ -20,7 +20,16 @@ Le scadenze di fine febbraio seguono l’ultimo giorno del mese (29 negli anni b
 Al primo avvio vengono precaricate tutte le scadenze (mensili, trimestrali, annuali, sicurezza),
 ciascuna alla prima data futura. Le date di estintori/caldaia/Alloggiati Web sono indicative: vanno personalizzate.
 
-## Avvio in locale
+## Prova immediata: `demo/index.html`
+
+Apri **`demo/index.html`** con un doppio clic (Chrome, Edge, Safari, Firefox; anche da telefono):
+è l'app completa in un unico file, senza installare nulla. I dati restano nel browser
+(localStorage) e gli avvisi sono solo simulati: puoi vedere le anteprime Email/WhatsApp/SMS
+e provare il “Magic Link” di conferma. Il pulsante “Ricomincia da zero” cancella i dati di prova.
+
+Per rigenerarlo dopo una modifica al codice: `npm run build:demo`.
+
+## Avvio in locale (versione completa)
 
 ```bash
 npm install
