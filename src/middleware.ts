@@ -8,6 +8,7 @@ const PUBLIC = [
   "/api/logout",
   "/conferma/", // protetta dal token firmato nel link
   "/api/cron/", // protetta da CRON_SECRET
+  "/api/calendar/feed", // protetta dal token nel link
 ];
 
 /**
@@ -31,5 +32,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|icon-192.png|icon-512.png|apple-touch-icon.png|manifest.webmanifest).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|icon-192.png|icon-512.png|apple-touch-icon.png|manifest.webmanifest|sw.js).*)"],
 };

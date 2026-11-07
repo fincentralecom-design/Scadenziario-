@@ -3,7 +3,7 @@
 import type { AlertMessage } from "./alerts";
 import type { Settings } from "./types";
 
-export type Channel = "email" | "whatsapp" | "sms";
+export type Channel = "email" | "whatsapp" | "sms" | "push";
 
 export interface SendResult {
   channel: Channel;

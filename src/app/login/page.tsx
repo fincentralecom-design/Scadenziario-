@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { CalendarCheck, Eye, EyeOff, LogIn } from "lucide-react";
+import Splash from "@/components/Splash";
 
 export default function LoginPage() {
   const [user, setUser] = useState("");
@@ -31,6 +32,7 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-blue-800 px-4 py-10">
+      <Splash />
       <form onSubmit={submit} className="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl">
         <div className="mb-6 flex items-center gap-3">
           <CalendarCheck className="h-12 w-12 shrink-0 text-blue-800" aria-hidden />

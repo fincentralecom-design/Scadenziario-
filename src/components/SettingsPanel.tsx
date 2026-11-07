@@ -5,6 +5,7 @@ import { todayRome } from "@/lib/dates";
 import type { Settings } from "@/lib/types";
 import { api } from "./api";
 import type { Notify } from "./feedback";
+import PushCard from "./PushCard";
 
 interface SettingsResponse {
   settings: Settings;
@@ -130,6 +131,10 @@ export default function SettingsPanel({ notify }: { notify: Notify }) {
             </div>
           ))}
           <label className="flex items-start gap-3 text-lg">
+            <input type="checkbox" className="mt-1 h-6 w-6" checked={s.channels.push} onChange={(e) => set("channels", { ...s.channels, push: e.target.checked })} />
+            <span>Invia anche le <b>notifiche push</b> ai telefoni iscritti (vedi sotto)</span>
+          </label>
+          <label className="flex items-start gap-3 text-lg">
             <input type="checkbox" className="mt-1 h-6 w-6" checked={s.overdueReminder} onChange={(e) => set("overdueReminder", e.target.checked)} />
             <span>Sollecito giornaliero se una scadenza è superata e non ancora confermata</span>
           </label>
@@ -148,6 +153,8 @@ export default function SettingsPanel({ notify }: { notify: Notify }) {
           </p>
         )}
       </form>
+
+      <PushCard notify={notify} />
 
       <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-1 text-2xl font-extrabold">Test degli avvisi</h2>

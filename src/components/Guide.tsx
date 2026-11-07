@@ -113,8 +113,49 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
     title: "📲 Conferma dal telefono (Magic Link)",
     body: (
       <>
+        <p>Sul telefono il menu completo si apre col pulsante <b>☰ Menu</b> in alto a destra; in basso ci sono le 4 schede e il pulsante blu <b>+</b> per aggiungere al volo.</p>
         <p>Ogni avviso contiene un link personale. Aprendolo compare un grande pulsante <b>✅ HO FATTO</b>: premilo e la scadenza viene chiusa e registrata nello storico.</p>
         <p>Il link funziona <b>senza password</b>, vale solo per quella scadenza e smette di funzionare dopo l&apos;uso. Se hai sbagliato, nelle 24 ore successive puoi premere “annulla la conferma”.</p>
+      </>
+    ),
+  },
+  {
+    title: "🤖 Assistente: scrivi o parla",
+    body: (
+      <>
+        <p>Nella scheda <b>Aggiungi</b>, in alto, c&apos;è l&apos;assistente. Scrivi o tocca il <b>microfono</b> 🎤 e di&apos; per esempio:</p>
+        <ul>
+          <li>“Assicurazione della struttura il 20 dicembre, 350 euro, ogni anno”</li>
+          <li>“Ricordami la TARI il 16 di ogni mese”</li>
+          <li>“Revisione caldaia tra 2 mesi”</li>
+        </ul>
+        <p>L&apos;assistente prepara la scadenza: controllala e premi <b>Salva</b> (o <b>Modifica</b> per correggerla nel modulo). Puoi dettare più scadenze insieme.</p>
+        <p>Se il microfono non compare, usa il microfono della tastiera dell&apos;iPhone. Con la chiave AI configurata (vedi Netlify) l&apos;assistente capisce anche frasi complesse e aggiunge da solo codici F24 e note.</p>
+      </>
+    ),
+  },
+  {
+    title: "🔎 Filtri ed esportazione Excel / PDF",
+    body: (
+      <>
+        <p>Sotto il modulo, nell&apos;<b>Elenco scadenze</b>, premi <b>Filtri</b> per scegliere stato (da fare, scadute, completate…), categoria, ricorrenza, periodo (dal… al…) e “solo con importo”. Ci sono scorciatoie come “Questo mese” e “Prossimi 3 mesi”.</p>
+        <p>Premi <b>Excel</b> o <b>PDF</b> per scaricare l&apos;elenco <b>così come lo vedi filtrato</b>, con il totale degli importi: comodo da stampare o da mandare al commercialista.</p>
+      </>
+    ),
+  },
+  {
+    title: "📲 Notifiche sull'iPhone e Calendario",
+    body: (
+      <>
+        <p><b>Notifiche push</b> (come quelle di WhatsApp, gratis):</p>
+        <ol>
+          <li>Apri il sito con <b>Safari</b>, tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b>.</li>
+          <li>Apri lo Scadenziario dall&apos;icona sulla Home ed entra.</li>
+          <li>Vai in <b>Avvisi</b> → <b>Attiva notifiche su questo telefono</b> → <b>Consenti</b>.</li>
+          <li>Premi <b>Invia notifica di prova</b> per controllare.</li>
+        </ol>
+        <p>Serve iOS 16.4 o successivo. Puoi attivarle su più telefoni.</p>
+        <p><b>Calendario dell&apos;iPhone</b>: in <b>Avvisi</b> premi <b>Abbonati nel Calendario iPhone</b>. Le scadenze compaiono nel Calendario con promemoria 3 giorni prima e il giorno stesso alle 8:30, e si aggiornano da sole. Nella schermata di aggiunta disattiva “Rimuovi avvisi”. Su ogni scheda c&apos;è anche “Aggiungi al Calendario” per una singola scadenza.</p>
       </>
     ),
   },
@@ -146,6 +187,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
           <li><code>RESEND_API_KEY</code> + <code>EMAIL_FROM</code>: invio email con Resend. Senza dominio verificato si usa <code>onboarding@resend.dev</code> e le email arrivano solo all&apos;indirizzo dell&apos;account Resend.</li>
           <li><code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>, <code>TWILIO_SMS_FROM</code>, <code>TWILIO_WHATSAPP_FROM</code>: SMS e WhatsApp.</li>
           <li><code>APP_USERNAME</code> / <code>APP_PASSWORD</code>: cambiano utente e password di accesso.</li>
+          <li><code>ANTHROPIC_API_KEY</code>: attiva l&apos;assistente AI completo (senza, funziona in modalità base).</li>
         </ul>
         <p>Le esecuzioni automatiche si vedono in Netlify → Logs → Functions → <b>check-deadlines</b>.</p>
       </>

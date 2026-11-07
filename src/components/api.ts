@@ -12,12 +12,32 @@ export interface AppData {
 type DemoHooks = {
   api: (url: string, method: string, body?: unknown) => Promise<unknown>;
   receipt: (deadlineId: string, historyId: string) => string;
+  calendar: (id?: string) => string;
 };
 const demo = () => (globalThis as { __scadenziarioDemo?: DemoHooks }).__scadenziarioDemo;
 
 export function receiptUrl(deadlineId: string, historyId: string): string {
   return demo()?.receipt(deadlineId, historyId) ?? `/api/receipts/${encodeURIComponent(deadlineId)}/${historyId}`;
 }
+
+/** Indirizzo del file .ics con le scadenze (nella demo viene creato nel browser). */
+export function calendarUrl(id?: string): string {
+  const d = demo();
+  if (!d) return id ? `/api/calendar?id=${encodeURIComponent(id)}` : "/api/calendar";
+  return URL.createObjectURL(new Blob([d.calendar(id)], { type: "text/calendar" }));
+}
+
+/** Scarica il file .ics: su iPhone Safari propone subito "Aggiungi al Calendario". */
+export function downloadCalendar(id?: string) {
+  const a = document.createElement("a");
+  a.href = calendarUrl(id);
+  a.download = id ? "scadenza.ics" : "scadenziario-greco.ics";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+export const isDemo = () => !!demo();
 
 export async function api<T>(url: string, method = "GET", body?: unknown): Promise<T> {
   const d = demo();

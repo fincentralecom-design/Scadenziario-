@@ -5,6 +5,8 @@ import { todayRome } from "@/lib/dates";
 import { completeDeadline, effectiveDate, undoLastCompletion, type CompletionInput } from "@/lib/deadlines";
 import { normalizeContract, planContractSync, sanitizeDeadline } from "@/lib/domain";
 import { buildSeed } from "@/lib/seed";
+import { buildIcs } from "@/lib/ics";
+import { quickParse } from "@/lib/quickParse";
 import { DEFAULT_SETTINGS, type Contract, type Deadline, type Settings } from "@/lib/types";
 
 const KEY = "scadenziario-pro-demo-v1";
@@ -176,6 +178,13 @@ async function handle(url: string, method: string, body?: unknown): Promise<unkn
     };
   }
 
+  if (res === "push") return { publicKey: null, devices: 0 };
+
+  if (res === "assistant") {
+    const turns = ((body as { messages?: { role: string; content: string }[] })?.messages ?? []).filter((t) => t.role === "user");
+    return { ...quickParse(turns[turns.length - 1]?.content ?? "", todayRome()), mode: "base" };
+  }
+
   throw new Error(`Operazione non disponibile nella versione locale: ${method} ${url}`);
 }
 
@@ -195,5 +204,9 @@ export function installMockApi() {
       return r === undefined ? r : JSON.parse(JSON.stringify(r));
     },
     receipt,
+    calendar: (id?: string) => {
+      const list = Object.values(load().deadlines).filter((d) => !id || d.id === id);
+      return buildIcs(list, todayRome(), id ? 1 : 12, "", !!id);
+    },
   };
 }

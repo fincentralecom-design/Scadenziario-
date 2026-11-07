@@ -1,12 +1,13 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { BellRing, BookOpen, CalendarCheck, FileText, LogOut, Plus, PlusCircle, TriangleAlert } from "lucide-react";
+import { BellRing, BookOpen, CalendarCheck, FileText, LogOut, Menu, Plus, PlusCircle, TriangleAlert, X } from "lucide-react";
 import { api, type AppData } from "./api";
 import Dashboard from "./Dashboard";
 import DeadlineManager from "./DeadlineManager";
 import Contracts from "./Contracts";
 import SettingsPanel from "./SettingsPanel";
 import Guide from "./Guide";
+import Splash from "./Splash";
 import type { Deadline } from "@/lib/types";
 import type { Notify, ToastAction } from "./feedback";
 
@@ -28,6 +29,7 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
   const [party, setParty] = useState(0);
   const [editing, setEditing] = useState<Deadline | null>(null);
   const [guide, setGuide] = useState(false);
+  const [menu, setMenu] = useState(false);
 
   const logout = async () => {
     if (!confirm("Vuoi uscire dallo Scadenziario?")) return;
@@ -96,15 +98,23 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
             <p className="text-sm text-blue-200 sm:text-base">By Bruno Greco</p>
           </div>
           <button
+            onClick={() => setMenu(true)}
+            className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl bg-white px-3 py-1.5 text-sm font-bold text-blue-900 shadow active:scale-95 md:hidden"
+            aria-label="Apri il menu"
+            aria-expanded={menu}
+          >
+            <Menu className="h-7 w-7" aria-hidden /> Menu
+          </button>
+          <button
             onClick={() => setGuide(true)}
-            className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl bg-white px-3 py-1.5 text-sm font-bold text-blue-900 shadow hover:bg-blue-50 sm:flex-row sm:gap-2 sm:px-4 sm:py-2 sm:text-lg"
+            className="hidden shrink-0 flex-col items-center gap-0.5 rounded-xl bg-white px-3 py-1.5 text-sm font-bold text-blue-900 shadow hover:bg-blue-50 md:flex md:flex-row md:gap-2 md:px-4 md:py-2 md:text-lg"
           >
             <BookOpen className="h-6 w-6" aria-hidden /> Guida
           </button>
           {showLogout && (
             <button
               onClick={() => void logout()}
-              className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl border-2 border-white/40 px-2.5 py-1 text-sm font-bold text-white hover:bg-blue-700 sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-lg"
+              className="hidden shrink-0 flex-col items-center gap-0.5 rounded-xl border-2 border-white/40 px-2.5 py-1 text-sm font-bold text-white hover:bg-blue-700 md:flex md:flex-row md:gap-2 md:px-3 md:py-2 md:text-lg"
             >
               <LogOut className="h-6 w-6" aria-hidden /> Esci
             </button>
@@ -162,7 +172,67 @@ export default function App({ showLogout = true }: { showLogout?: boolean }) {
         {tab === "settings" && <SettingsPanel notify={notify} />}
       </main>
 
+      {/* Menu ad hamburger (telefono) */}
+      {menu && (
+        <div className="fade-in fixed inset-0 z-[65] bg-black/50 md:hidden" onClick={() => setMenu(false)} role="dialog" aria-modal="true" aria-label="Menu">
+          <nav
+            className="drawer-in safe-top safe-bottom absolute inset-y-0 right-0 flex w-[85%] max-w-sm flex-col bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between bg-blue-800 px-5 py-4 text-white">
+              <div>
+                <p className="text-xl font-extrabold">Scadenziario Greco</p>
+                <p className="text-sm text-blue-200">By Bruno Greco</p>
+              </div>
+              <button onClick={() => setMenu(false)} className="rounded-xl bg-white/15 p-2" aria-label="Chiudi il menu">
+                <X className="h-7 w-7" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setMenu(false);
+                    goTab(t.id);
+                  }}
+                  className={`flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-xl font-bold active:bg-slate-100 ${tab === t.id ? "bg-blue-50 text-blue-800" : "text-slate-800"}`}
+                >
+                  <t.icon className="h-7 w-7 shrink-0" aria-hidden /> {t.label}
+                </button>
+              ))}
+              <hr className="my-2 border-slate-200" />
+              <button
+                onClick={() => {
+                  setMenu(false);
+                  startEdit(null);
+                }}
+                className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-xl font-bold text-slate-800 active:bg-slate-100"
+              >
+                <Plus className="h-7 w-7 shrink-0" aria-hidden /> Nuova scadenza
+              </button>
+              <button
+                onClick={() => {
+                  setMenu(false);
+                  setGuide(true);
+                }}
+                className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-xl font-bold text-slate-800 active:bg-slate-100"
+              >
+                <BookOpen className="h-7 w-7 shrink-0" aria-hidden /> Guida
+              </button>
+            </div>
+            {showLogout && (
+              <button onClick={() => void logout()} className="m-3 flex items-center justify-center gap-3 rounded-2xl border-2 border-red-200 px-4 py-4 text-xl font-bold text-red-700 active:bg-red-50">
+                <LogOut className="h-7 w-7" aria-hidden /> Esci
+              </button>
+            )}
+          </nav>
+        </div>
+      )}
+
       {guide && <Guide onClose={() => setGuide(false)} />}
+
+      <Splash />
 
       {/* Pulsante rapido "+" sul telefono */}
       {tab === "dashboard" && data && (

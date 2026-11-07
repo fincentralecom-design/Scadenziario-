@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Eye, EyeOff, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { Eye, EyeOff, FileSpreadsheet, FileText, Filter, Pencil, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { formatLong, formatShort } from "@/lib/dates";
-import { effectiveDate, shiftReason, sortByDate } from "@/lib/deadlines";
+import { daysLeft, effectiveDate, formatEuro, shiftReason, sortByDate } from "@/lib/deadlines";
+import type { DeadlineDraft } from "@/lib/quickParse";
 import { CATEGORY_LABELS, RECURRENCE_LABELS, type Calculator, type Category, type Deadline, type Recurrence } from "@/lib/types";
 import { api, type AppData } from "./api";
 import type { Notify } from "./feedback";
+import Assistant from "./Assistant";
+import { exportExcel, exportPdf } from "./exporters";
 
 interface Props {
   data: AppData;
@@ -58,6 +61,42 @@ const num = (s: string) => {
   return s.trim() === "" || Number.isNaN(n) ? null : n;
 };
 const str = (n: number | null | undefined) => (n === null || n === undefined ? "" : String(n).replace(".", ","));
+
+function fromDraft(d: DeadlineDraft, today: string): FormState {
+  return {
+    ...EMPTY(today),
+    title: d.title,
+    category: d.category,
+    dueDate: d.dueDate,
+    recurrence: d.recurrence,
+    amount: str(d.amount),
+    f24Code: d.f24Code ?? "",
+    portal: d.portal ?? "",
+    notes: d.notes ?? "",
+    shiftIfHoliday: d.shiftIfHoliday,
+  };
+}
+
+interface Filters {
+  q: string;
+  category: Category | "";
+  recurrence: Recurrence | "";
+  status: "" | "todo" | "late" | "next30" | "done" | "inactive";
+  from: string;
+  to: string;
+  withAmount: boolean;
+  sort: "date" | "title" | "amount";
+}
+
+const NO_FILTERS: Filters = { q: "", category: "", recurrence: "", status: "", from: "", to: "", withAmount: false, sort: "date" };
+
+const STATUS_LABELS: Record<Exclude<Filters["status"], "">, string> = {
+  todo: "Da fare",
+  late: "Scadute / oggi",
+  next30: "Prossimi 30 giorni",
+  done: "Completate",
+  inactive: "Disattivate",
+};
 
 function fromDeadline(d: Deadline): FormState {
   const c = d.calculator;
@@ -112,7 +151,10 @@ function toPayload(f: FormState): Record<string, unknown> {
 export default function DeadlineManager({ data, reload, notify, editing, setEditing }: Props) {
   const [form, setForm] = useState<FormState>(() => (editing ? fromDeadline(editing) : EMPTY(data.today)));
   const [busy, setBusy] = useState(false);
-  const [q, setQ] = useState("");
+  const [f, setF] = useState<Filters>(NO_FILTERS);
+  const [showFilters, setShowFilters] = useState(false);
+  const [exporting, setExporting] = useState<"" | "xlsx" | "pdf">("");
+  const setFilter = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((x) => ({ ...x, [k]: v }));
 
   useEffect(() => {
     setForm(editing ? fromDeadline(editing) : EMPTY(data.today));
@@ -161,11 +203,74 @@ export default function DeadlineManager({ data, reload, notify, editing, setEdit
     await reload();
   };
 
-  const list = sortByDate(data.deadlines).filter((d) => !q || d.title.toLowerCase().includes(q.toLowerCase()));
+  const list = useMemo(() => {
+    const needle = f.q.trim().toLowerCase();
+    const out = sortByDate(data.deadlines).filter((d) => {
+      const eff = effectiveDate(d);
+      if (needle && !`${d.title} ${d.description ?? ""} ${d.notes ?? ""} ${d.f24Code ?? ""} ${d.portal ?? ""}`.toLowerCase().includes(needle)) return false;
+      if (f.category && d.category !== f.category) return false;
+      if (f.recurrence && d.recurrence !== f.recurrence) return false;
+      if (f.from && eff < f.from) return false;
+      if (f.to && eff > f.to) return false;
+      if (f.withAmount && !d.amount) return false;
+      const todo = d.active && d.status === "todo";
+      switch (f.status) {
+        case "todo": return todo;
+        case "late": return todo && daysLeft(d, data.today) <= 0;
+        case "next30": return todo && daysLeft(d, data.today) >= 0 && daysLeft(d, data.today) <= 30;
+        case "done": return d.status === "done" || d.history.length > 0;
+        case "inactive": return !d.active;
+        default: return true;
+      }
+    });
+    if (f.sort === "title") out.sort((a, b) => a.title.localeCompare(b.title, "it"));
+    if (f.sort === "amount") out.sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
+    return out;
+  }, [data.deadlines, data.today, f]);
+
+  const activeCount = (Object.keys(NO_FILTERS) as (keyof Filters)[]).filter((k) => k !== "sort" && f[k] !== NO_FILTERS[k]).length;
+  const filtersLabel = [
+    f.q && `testo “${f.q}”`,
+    f.category && CATEGORY_LABELS[f.category],
+    f.recurrence && RECURRENCE_LABELS[f.recurrence],
+    f.status && STATUS_LABELS[f.status],
+    f.from && `dal ${formatShort(f.from)}`,
+    f.to && `al ${formatShort(f.to)}`,
+    f.withAmount && "con importo",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const total = list.reduce((sum, d) => sum + (d.amount ?? 0), 0);
+
+  const doExport = async (kind: "xlsx" | "pdf") => {
+    if (!list.length) return notify("Nessuna scadenza da esportare con questi filtri.");
+    setExporting(kind);
+    try {
+      if (kind === "xlsx") await exportExcel(list, data.today);
+      else await exportPdf(list, data.today, filtersLabel);
+      notify(kind === "xlsx" ? "📊 File Excel creato" : "📄 PDF creato");
+    } catch (e) {
+      notify(`Errore nell'esportazione: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setExporting("");
+    }
+  };
 
   return (
+    <>
+    <Assistant
+      notify={notify}
+      reload={reload}
+      onUseInForm={(d) => {
+        setEditing(null);
+        setTimeout(() => {
+          setForm(fromDraft(d, data.today));
+          document.getElementById("modulo-scadenza")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 0);
+      }}
+    />
     <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-      <form onSubmit={save} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <form id="modulo-scadenza" onSubmit={save} className="scroll-mt-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-4 flex items-center gap-2 text-2xl font-extrabold">
           {editing ? <Pencil className="h-7 w-7" aria-hidden /> : <Plus className="h-7 w-7" aria-hidden />}
           {editing ? "Modifica scadenza" : "Aggiungi nuova scadenza"}
@@ -277,15 +382,98 @@ export default function DeadlineManager({ data, reload, notify, editing, setEdit
       </form>
 
       <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-        <h2 className="mb-3 text-2xl font-extrabold">Tutte le scadenze ({data.deadlines.length})</h2>
-        <input className="field mb-3" placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Cerca nell'elenco" />
-        <ul className="divide-y divide-slate-200">
+        <h2 className="mb-3 text-2xl font-extrabold">
+          Elenco scadenze <span className="text-slate-500">({list.length}{list.length !== data.deadlines.length ? ` di ${data.deadlines.length}` : ""})</span>
+        </h2>
+        <input className="field" placeholder="Cerca per nome, codice, note…" value={f.q} onChange={(e) => setFilter("q", e.target.value)} aria-label="Cerca nell'elenco" />
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button className={`btn-ghost !px-3 !py-2 text-base ${activeCount ? "!border-blue-600 !text-blue-800" : ""}`} onClick={() => setShowFilters(!showFilters)} aria-expanded={showFilters}>
+            <Filter className="h-5 w-5" aria-hidden /> Filtri{activeCount ? ` (${activeCount})` : ""}
+          </button>
+          <button className="btn-ghost !px-3 !py-2 text-base" onClick={() => void doExport("xlsx")} disabled={!!exporting}>
+            <FileSpreadsheet className="h-5 w-5 text-green-700" aria-hidden /> {exporting === "xlsx" ? "Creo…" : "Excel"}
+          </button>
+          <button className="btn-ghost !px-3 !py-2 text-base" onClick={() => void doExport("pdf")} disabled={!!exporting}>
+            <FileText className="h-5 w-5 text-red-700" aria-hidden /> {exporting === "pdf" ? "Creo…" : "PDF"}
+          </button>
+        </div>
+
+        <div className={`grid transition-all duration-300 ${showFilters ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+          <div className="min-h-0 overflow-hidden">
+            <div className="mt-3 grid gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-2">
+              <div>
+                <label className="label" htmlFor="flt-status">Stato</label>
+                <select id="flt-status" className="field" value={f.status} onChange={(e) => setFilter("status", e.target.value as Filters["status"])}>
+                  <option value="">Tutti</option>
+                  {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="flt-cat">Categoria</label>
+                <select id="flt-cat" className="field" value={f.category} onChange={(e) => setFilter("category", e.target.value as Category | "")}>
+                  <option value="">Tutte</option>
+                  {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="flt-rec">Ricorrenza</label>
+                <select id="flt-rec" className="field" value={f.recurrence} onChange={(e) => setFilter("recurrence", e.target.value as Recurrence | "")}>
+                  <option value="">Tutte</option>
+                  {Object.entries(RECURRENCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="flt-sort">Ordina per</label>
+                <select id="flt-sort" className="field" value={f.sort} onChange={(e) => setFilter("sort", e.target.value as Filters["sort"])}>
+                  <option value="date">Data di scadenza</option>
+                  <option value="title">Nome (A-Z)</option>
+                  <option value="amount">Importo (dal più alto)</option>
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="flt-from">Dal giorno</label>
+                <input id="flt-from" type="date" className="field" value={f.from} onChange={(e) => setFilter("from", e.target.value)} />
+              </div>
+              <div>
+                <label className="label" htmlFor="flt-to">Al giorno</label>
+                <input id="flt-to" type="date" className="field" value={f.to} onChange={(e) => setFilter("to", e.target.value)} />
+              </div>
+              <label className="flex items-center gap-3 text-lg sm:col-span-2">
+                <input type="checkbox" className="h-6 w-6" checked={f.withAmount} onChange={(e) => setFilter("withAmount", e.target.checked)} />
+                Solo scadenze con importo
+              </label>
+              <div className="flex flex-wrap gap-2 sm:col-span-2">
+                {[
+                  { label: "Questo mese", from: data.today.slice(0, 8) + "01", to: data.today.slice(0, 8) + "31" },
+                  { label: "Prossimi 3 mesi", from: data.today, to: new Date(Date.parse(data.today) + 92 * 86_400_000).toISOString().slice(0, 10) },
+                  { label: `Anno ${data.today.slice(0, 4)}`, from: `${data.today.slice(0, 4)}-01-01`, to: `${data.today.slice(0, 4)}-12-31` },
+                ].map((p) => (
+                  <button key={p.label} className="rounded-full border-2 border-slate-300 bg-white px-3 py-1.5 text-base font-semibold active:bg-slate-100" onClick={() => setF((x) => ({ ...x, from: p.from, to: p.to }))}>
+                    {p.label}
+                  </button>
+                ))}
+                {activeCount > 0 && (
+                  <button className="flex items-center gap-1 rounded-full border-2 border-red-200 bg-white px-3 py-1.5 text-base font-semibold text-red-700" onClick={() => setF(NO_FILTERS)}>
+                    <RotateCcw className="h-4 w-4" aria-hidden /> Azzera filtri
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {total > 0 && <p className="mt-3 text-base text-slate-700">Totale importi in elenco: <b>{formatEuro(total)}</b></p>}
+        {!list.length && <p className="mt-4 rounded-xl bg-slate-50 p-4 text-lg text-slate-600">Nessuna scadenza con questi filtri.</p>}
+
+        <ul className="mt-2 divide-y divide-slate-200">
           {list.map((d) => (
             <li key={d.id} className={`flex flex-col gap-2 py-3 ${d.active ? "" : "opacity-60"}`}>
               <div>
                 <p className="text-lg font-bold leading-snug">{d.title}</p>
                 <p className="text-base text-slate-600">
                   {d.status === "done" ? "Completata" : formatShort(effectiveDate(d))} · {RECURRENCE_LABELS[d.recurrence]} · {CATEGORY_LABELS[d.category]}
+                  {d.amount ? ` · ${formatEuro(d.amount)}` : ""}
                   {!d.active && " · DISATTIVATA"}
                 </p>
               </div>
@@ -306,5 +494,6 @@ export default function DeadlineManager({ data, reload, notify, editing, setEdit
         </ul>
       </section>
     </div>
+    </>
   );
 }

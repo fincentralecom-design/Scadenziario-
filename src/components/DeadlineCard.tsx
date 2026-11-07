@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Calculator, ChevronDown, CircleCheckBig, Globe, History, Pencil, Receipt, Undo2 } from "lucide-react";
+import { CalendarPlus, Calculator, ChevronDown, CircleCheckBig, Globe, History, Pencil, Receipt, Undo2 } from "lucide-react";
 import { formatLong, formatShort } from "@/lib/dates";
 import { bucketOf, calculate, daysLeft, effectiveDate, f24CodeFor, formatEuro, shiftReason, type Bucket } from "@/lib/deadlines";
+import { downloadCalendar } from "./api";
 import { CATEGORY_LABELS, RECURRENCE_LABELS, type Deadline } from "@/lib/types";
 
 export const BUCKET_STYLE: Record<Bucket, { border: string; badge: string; label: string }> = {
@@ -130,6 +131,9 @@ export default function DeadlineCard({ d, today, onComplete, onEdit, onUndo, onS
               </p>
             )}
 
+            <button className="btn-ghost w-full !px-3 text-base" onClick={() => downloadCalendar(d.id)}>
+              <CalendarPlus className="h-5 w-5" aria-hidden /> Aggiungi al Calendario (con promemoria)
+            </button>
             <div className="grid grid-cols-2 gap-2 pb-3">
               <button className="btn-ghost !px-3 text-base" onClick={() => onEdit(d)}>
                 <Pencil className="h-5 w-5" aria-hidden /> Modifica

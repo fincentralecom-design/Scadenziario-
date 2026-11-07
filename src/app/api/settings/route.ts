@@ -30,7 +30,7 @@ export async function PUT(req: Request) {
       email: String(b.email ?? "").trim().slice(0, 200),
       whatsapp: String(b.whatsapp ?? "").trim().slice(0, 30),
       sms: String(b.sms ?? "").trim().slice(0, 30),
-      channels: { email: !!b.channels?.email, whatsapp: !!b.channels?.whatsapp, sms: !!b.channels?.sms },
+      channels: { email: !!b.channels?.email, whatsapp: !!b.channels?.whatsapp, sms: !!b.channels?.sms, push: !!b.channels?.push },
       overdueReminder: !!b.overdueReminder,
       appUrl: String(b.appUrl ?? "").trim().slice(0, 300),
     };

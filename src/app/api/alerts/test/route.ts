@@ -1,7 +1,6 @@
 import { todayRome } from "@/lib/dates";
 import { errorJson, json } from "@/lib/http";
-import { sendAlert } from "@/lib/notify";
-import { getSettings, runDailyCheck, sampleAlert } from "@/lib/service";
+import { getSettings, runDailyCheck, sampleAlert, sendAllChannels } from "@/lib/service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -31,7 +30,7 @@ export async function POST(req: Request) {
     const results = [];
     for (const m of messages.slice(0, 5)) {
       const test = { ...m, subject: `[TEST] ${m.subject}`, sms: `[TEST] ${m.sms}`, whatsapp: `[TEST]\n${m.whatsapp}` };
-      results.push({ subject: test.subject, results: await sendAlert(test, settings) });
+      results.push({ subject: test.subject, results: await sendAllChannels(test, settings) });
     }
     return json({ date, isSample, messages, sent: results });
   } catch (e) {

@@ -84,7 +84,7 @@ export interface Settings {
   email: string;
   whatsapp: string;
   sms: string;
-  channels: { email: boolean; whatsapp: boolean; sms: boolean };
+  channels: { email: boolean; whatsapp: boolean; sms: boolean; push: boolean };
   /** Sollecito giornaliero per scadenze superate e non confermate. */
   overdueReminder: boolean;
   /** URL pubblico dell'app, usato nei magic link. */
@@ -96,7 +96,7 @@ export const DEFAULT_SETTINGS: Settings = {
   email: "",
   whatsapp: "",
   sms: "",
-  channels: { email: true, whatsapp: true, sms: true },
+  channels: { email: true, whatsapp: true, sms: true, push: true },
   overdueReminder: false,
   appUrl: "",
 };

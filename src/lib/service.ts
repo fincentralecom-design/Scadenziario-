@@ -5,6 +5,7 @@ import { normalizeContract, planContractSync, sanitizeDeadline } from "./domain"
 import { todayRome } from "./dates";
 import { completeDeadline, effectiveDate, undoLastCompletion, type CompletionInput } from "./deadlines";
 import { sendAlert, type SendResult } from "./notify";
+import { pushPayloadFor, sendPushToAll } from "./push";
 import { buildSeed } from "./seed";
 import { getStore } from "./store";
 import { magicLink } from "./token";
@@ -90,6 +91,15 @@ export function linkForDeadline(d: Deadline, s: Settings): string {
   return magicLink(d.id, d.dueDate, s.appUrl);
 }
 
+/** Email, WhatsApp, SMS e notifiche push sui dispositivi iscritti. */
+export async function sendAllChannels(a: AlertMessage, settings: Settings): Promise<SendResult[]> {
+  const results = await sendAlert(a, settings);
+  if (settings.channels.push) {
+    results.push(await sendPushToAll(pushPayloadFor(a)).catch((e: unknown) => ({ channel: "push" as const, ok: false, detail: String(e) })));
+  }
+  return results;
+}
+
 export interface DailyRunResult {
   today: string;
   dryRun: boolean;
@@ -115,7 +125,7 @@ export async function runDailyCheck(opts: { today?: string; dryRun?: boolean } =
       out.push({ ...a, results: [], alreadySent });
       continue;
     }
-    const results = await sendAlert(a, settings);
+    const results = await sendAllChannels(a, settings);
     if (results.some((r) => r.ok)) sent.add(a.key);
     out.push({ ...a, results, alreadySent });
   }

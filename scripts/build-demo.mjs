@@ -14,7 +14,7 @@ await build({
   input: path.join(root, "demo/src/main.tsx"),
   resolve: { alias: { "@": path.join(root, "src") } },
   transform: { jsx: { runtime: "automatic" }, define: { "process.env.NODE_ENV": '"production"' } },
-  output: { file: path.join(out, "app.js"), format: "iife", minify: true },
+  output: { file: path.join(out, "app.js"), format: "iife", minify: true, inlineDynamicImports: true },
   onwarn: (w, def) => { if (w.code !== "MODULE_LEVEL_DIRECTIVE") def(w); },
 });
 const js = await readFile(path.join(out, "app.js"), "utf8");

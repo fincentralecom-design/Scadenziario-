@@ -30,3 +30,8 @@ export function baseUrl(settingsUrl?: string): string {
 export function magicLink(id: string, nominalDueDate: string, settingsUrl?: string): string {
   return `${baseUrl(settingsUrl)}/conferma/${encodeURIComponent(id)}?t=${signDeadline(id, nominalDueDate)}`;
 }
+
+/** Token per il calendario in abbonamento (il Calendario dell'iPhone non può fare login). */
+export function calendarToken(): string {
+  return createHmac("sha256", secret()).update("calendar-feed:v1").digest("base64url").slice(0, 32);
+}
